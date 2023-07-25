@@ -57,16 +57,6 @@ class MainMenu(QMainWindow):
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
-        # Set the custom title bar
-        title_bar = TitleBar(self)
-        self.setMenuWidget(title_bar)
-
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-        #self.setWindowFlag(Qt.WindowFlag.FramelessWindowHint)
-        # Set the window flag to stay on top of other windows
-        #self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
-
-        self.setWindowTitle("MLS Data Sorter")
         # Set the size and position of the main window
         self.setFixedSize(1000, 600)
 
