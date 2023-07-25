@@ -29,6 +29,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from title_bar import TitleBar
+
 # Need to read this to make better visualizations:
 # https://www.pythonguis.com/tutorials/pyqt6-plotting-matplotlib/
 
@@ -55,6 +57,15 @@ class MainMenu(QMainWindow):
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
+        # Set the custom title bar
+        title_bar = TitleBar(self)
+        self.setMenuWidget(title_bar)
+
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        #self.setWindowFlag(Qt.WindowFlag.FramelessWindowHint)
+        # Set the window flag to stay on top of other windows
+        #self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
+
         self.setWindowTitle("MLS Data Sorter")
         # Set the size and position of the main window
         self.setFixedSize(1000, 600)
@@ -149,9 +160,6 @@ class MainMenu(QMainWindow):
         self.data_processing_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
         self.charts_page_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
         self.export_from_MLS_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
-
-        # Set the window flag to stay on top of other windows
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
 
         # Connect the currentChanged signal of the stacked widget to the update_button_styles method
         self.stacked_widget.currentChanged.connect(self.update_button_styles)
@@ -546,7 +554,7 @@ class MainMenu(QMainWindow):
 
         # Show the plot within the PyQt6 application
         self.canvas.draw()
-        
+
         # Add padding to the bottom of the chart
         self.figure.tight_layout()
 

@@ -2,9 +2,11 @@ import sys
 import time
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QTimer
+
 from splash_screen import SplashScreen
 from main_menu import MainMenu
 from mls_data_processor import MLSDataProcessor
+from title_bar import TitleBar
 
 def main():
     app = QApplication(sys.argv)
