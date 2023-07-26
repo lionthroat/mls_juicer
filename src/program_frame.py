@@ -31,6 +31,8 @@ class ProgramFrame(QWidget):
         # Then, WindowStaysOnTopHint tells your machine to open this program on top (in front of)
         # other programs/terminals
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setMinimumWidth(910)
+        self.setMinimumHeight(670)
 
         # Set a rounded rectangle mask
         mask = QPixmap(self.size())

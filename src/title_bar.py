@@ -47,7 +47,7 @@ class TitleBar(QWidget):
 
         # Add spacer item to push buttons to the right
         #                    (left margin, top margin, left padding policy, top padding policy)
-        spacer = QSpacerItem(520, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
+        spacer = QSpacerItem(800, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
         self.window_buttons_layout.addItem(spacer)
 
         # Minimize button
