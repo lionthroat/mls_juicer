@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd  # For reading in and manipulating CSV data from MLS exports
 import pyautogui  # For interacting with MLS: entering search criteria, clicking search buttons, etc.
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,  # Qt is for alignment
-                          pyqtSignal)
+                          pyqtSignal, QEvent)
 from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow,
@@ -29,8 +29,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from title_bar import TitleBar
-
 # Need to read this to make better visualizations:
 # https://www.pythonguis.com/tutorials/pyqt6-plotting-matplotlib/
 
@@ -39,6 +37,9 @@ def set_inputstyle(widget):
     widget.setStyleSheet("background-color: white; color: #111111;")
 
 class MainMenu(QMainWindow):
+    # Create a custom signal to be emitted when the title bar is clicked
+    mainMenuClicked = pyqtSignal(QEvent)
+
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -58,11 +59,11 @@ class MainMenu(QMainWindow):
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
         # Set the size and position of the main window
-        self.setFixedSize(1000, 600)
+        # self.setFixedSize(1000, 600)
 
-        # Center the main window on the user's monitor
-        screen_geometry = QApplication.primaryScreen().availableGeometry()
-        self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
+        # # Center the main window on the user's monitor
+        # screen_geometry = QApplication.primaryScreen().availableGeometry()
+        # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
         self.setStyleSheet("background-color: #6c6870; color: #FFFFFF")
 
         # Create a vertical splitter to divide the window into two sections
@@ -82,7 +83,7 @@ class MainMenu(QMainWindow):
         # Set the main content widget as the central widget for MLSDataProcessor
         self.setCentralWidget(splitter)
 
-        # Create a QVBoxLayout for the navigation pane
+        # Create a QVBoxLayout for the layout of items belonging to navigation_pane
         navigation_layout = QVBoxLayout(navigation_pane)
         navigation_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         navigation_layout.setContentsMargins(20, 20, 20, 20)
@@ -780,3 +781,9 @@ class MainMenu(QMainWindow):
 
         return sold_off_market_count
 
+    # Somehow this is "eating"
+    def mousePressEvent(self, event):
+        # print("main menu mouse press", flush=True)
+        if event.type() == QEvent.Type.MouseButtonPress:
+            # Emit the custom signal when the title bar is clicked
+            self.mainMenuClicked.emit(event)

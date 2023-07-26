@@ -9,9 +9,7 @@ from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, QTabWidget)
 
 from splash_screen import SplashScreen
-from main_menu import MainMenu
-from mls_data_processor import MLSDataProcessor
-from title_bar import TitleBar
+from program_frame import ProgramFrame
 
 def main():
     app = QApplication(sys.argv)
@@ -26,18 +24,17 @@ def main():
 
     time.sleep(6)
 
-    # Create and show the main window
-    main_window = MainMenu()
-    title_bar = TitleBar()
-    main_window.setWindowTitle("MLS Data Sorter")
-    main_window.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-    main_window.setMenuWidget(title_bar)
-    main_window.show()
+    # Create and show the Frame that further instantiates the TitleBar and MainMenu
+    frame = ProgramFrame()
 
-    # Redirect the standard output to the terminal
+    # Now that the frame has its layout, and the layout has 2 elements, show it
+    frame.show()
+
+    # Redirect the standard output to the terminal. (bc PyQt6 can otherwise
+    # repress print statements that go to terminal)
     sys.stdout = sys.__stdout__
     
-    # Start the application event loop
+    # Actually start the application event loop
     sys.exit(app.exec())
 
 if __name__ == "__main__":
