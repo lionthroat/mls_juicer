@@ -16,7 +16,9 @@ class TitleBar(QWidget):
 
     # Create a custom signal to be emitted when the "close" button is clicked
     close_signal = pyqtSignal()
-
+    minimize_signal = pyqtSignal()
+    maximize_restore_signal = pyqtSignal()
+    
     # def __init__(self, parent=None):
     #     super().__init__(parent)
     #     self.parent = parent
@@ -53,6 +55,7 @@ class TitleBar(QWidget):
         # Minimize button
         self.minimize = QPushButton(self)
         self.minimize.setIcon(QIcon('assets/min.png'))
+        self.minimize.clicked.connect(self.minimizeWindowSignalEmit)
         self.minimize.setFixedSize(25, 25)
         # self.minimize.setStyleSheet(
         #     """
@@ -71,6 +74,7 @@ class TitleBar(QWidget):
         # Maximize button
         self.maximize = QPushButton(self)
         self.maximize.setIcon(QIcon('assets/max.png'))
+        self.minimize.clicked.connect(self.maximizeRestoreWindowSignalEmit)
         self.maximize.setFixedSize(25, 25)
         # self.maximize.setStyleSheet(
         #     """
@@ -86,7 +90,7 @@ class TitleBar(QWidget):
         # emit the closeProgram signal to ProgramFrame
         self.close = QPushButton(self)
         self.close.setIcon(QIcon('assets/close.png'))
-        self.close.clicked.connect(self.closeProgram)
+        self.close.clicked.connect(self.closeProgramSignalEmit)
         self.close.setFixedSize(25, 25)
 
         self.window_buttons_layout.addWidget(self.minimize)
@@ -96,5 +100,13 @@ class TitleBar(QWidget):
 
     # Emits the custom close signal when the "close" button is clicked
     # (Close program is handled by ProgramFrame, which receives this signal)
-    def closeProgram(self):
+    def closeProgramSignalEmit(self):
         self.close_signal.emit()
+
+    def minimizeWindowSignalEmit(self):
+        print("minimize")
+        #self.minimize_signal.emit()
+
+    def maximizeRestoreWindowSignalEmit(self):
+        print("maximize")
+        #self.maximize_restore_signal.emit()

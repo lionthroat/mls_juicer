@@ -80,12 +80,17 @@ class ProgramFrame(QWidget):
         # Show our frame
         self.show()
 
-        # Connect the close signal from the TitleBar to the closeProgram method/slot/thing
+        # Connect the signal from TitleBar to the closeProgram and Minimize/Maximize method/slot/thing
         self.title_bar.close_signal.connect(self.closeProgram)
+        self.title_bar.minimize_signal.connect(self.minimizeProgram)
+        self.title_bar.maximize_restore_signal.connect(self.toggleMaximizeRestore)
 
     def closeProgram(self):
         # Close the entire program
         self.close()
+
+    def minimizeProgram(self):
+        self.setWindowState(self.windowState() | Qt.WindowState.WindowMinimized)
 
     def handleTitleBarClicked(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton:
@@ -107,3 +112,6 @@ class ProgramFrame(QWidget):
     def mouseReleaseEvent(self, event):
         self.offset = None
         super().mouseReleaseEvent(event)
+
+    def toggleMaximizeRestore(self):
+        self.setWindowState(self.windowState() | Qt.WindowState.WindowMaximized)
