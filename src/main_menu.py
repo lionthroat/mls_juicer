@@ -3,6 +3,7 @@ import re
 import statistics  # For calculating median prices, days on market, etc.
 import sys
 import time
+import pickle # To remember user information
 from datetime import datetime, timedelta  # For finding last month's solds
 
 import cv2  # For locating MLS elements to interact with, boxes, tables, buttons, etc.
@@ -36,6 +37,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 def set_inputstyle(widget):
     widget.setStyleSheet("background-color: white; color: #111111;")
 
+# class UserData:
+#     def __init__(self, name, age):
+#         self.name = name
+#         self.age = age
+
 class MainMenu(QMainWindow):
     # Create a custom signal to be emitted when the title bar is clicked
     mainMenuClicked = pyqtSignal(QEvent)
@@ -55,6 +61,7 @@ class MainMenu(QMainWindow):
 
         # instance variable for master dataframe with all properties
         self.data = None
+        self.name = ''
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
@@ -205,6 +212,20 @@ class MainMenu(QMainWindow):
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
         #layout.addStretch(1)
 
+        self.make_profile_label = QLabel("Make an user profile to continue.")
+        self.ask_user_name_label = QLabel("Your name:")
+        self.new_user_edit = QLineEdit()
+
+        layout.addWidget(self.make_profile_label)
+        layout.addWidget(self.ask_user_name_label)
+        layout.addWidget(self.new_user_edit)
+
+        self.save_button = QPushButton("Ok")
+        self.save_button.clicked.connect(self.save_name_input)
+        layout.addWidget(self.save_button)
+        # with open('filename.pickle', 'wb') as handle:
+        #     pickle.dump(name, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         # Last month name for report time period
         self.report_range = QLabel("All reports will be framed in terms of the most recently past calendar month:")
         layout.addWidget(self.report_range)
@@ -247,6 +268,9 @@ class MainMenu(QMainWindow):
         # Add button styles
         self.go_button.setStyleSheet(button_style)
         self.csv_file_button.setStyleSheet(button_style)
+
+    def save_name_input(self):
+        self.name = self.new_user_edit.text()
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
