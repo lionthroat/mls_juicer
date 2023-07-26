@@ -65,7 +65,7 @@ class MainMenu(QMainWindow):
         # screen_geometry = QApplication.primaryScreen().availableGeometry()
         # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
         self.setStyleSheet("background-color: #6c6870; color: #FFFFFF")
-        
+
         # Set the margins and padding to 0
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -105,7 +105,8 @@ class MainMenu(QMainWindow):
 
         ## Create a QVBoxLayout for the buttons
         buttons_layout = QVBoxLayout()
-
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        
         # Create Navigation Pane Buttons
         self.import_csv_button = QPushButton("Import CSV")
         self.data_processing_button = QPushButton("Data Processing")
@@ -148,6 +149,7 @@ class MainMenu(QMainWindow):
         # Set the stacked widget as the main content for MLSDataProcessor
         main_content_layout = QVBoxLayout(main_content)
         main_content_layout.addWidget(self.stacked_widget)
+        main_content_layout.addStretch(1)
 
         # Connect navigation buttons to their respective pages
         self.import_csv_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
@@ -200,6 +202,7 @@ class MainMenu(QMainWindow):
     # Set up UI elements for the main menu
     def setup_import_csv_page(self, import_csv_page):
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
+        #layout.addStretch(1)
 
         # Last month name for report time period
         self.report_range = QLabel("All reports will be framed in terms of the most recently past calendar month:")
@@ -246,7 +249,7 @@ class MainMenu(QMainWindow):
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
-        
+        layout.addStretch(1)
         button_style = (
             """QPushButton { background-color: #382c47;
             color: #FFFFFF;
@@ -286,7 +289,7 @@ class MainMenu(QMainWindow):
 
     def setup_charts_page(self, charts_page):
         layout = QVBoxLayout(charts_page)
-
+        layout.addStretch(1)
         # Create the matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
@@ -344,6 +347,8 @@ class MainMenu(QMainWindow):
 
     def setup_export_from_MLS_page(self, export_from_MLS_page):
         layout = QVBoxLayout(export_from_MLS_page)
+        layout.addStretch(1)
+
         # Add navigation buttons to the navigation pane + style them
         button_style = (
             """QPushButton { background-color: #382c47;

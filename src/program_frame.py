@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,
                           pyqtSignal, QEvent, pyqtSlot)
-from PyQt6.QtGui import QColor, QPixmap, QPalette, QIcon
+from PyQt6.QtGui import QColor, QPixmap, QPainter, QBitmap, QPalette, QIcon
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow, QFrame,
                              QMessageBox, QPushButton, QSplashScreen, QSplitter, QSizePolicy,
@@ -32,6 +32,25 @@ class ProgramFrame(QWidget):
         # other programs/terminals
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 
+        # Set a rounded rectangle mask
+        mask = QPixmap(self.size())
+        mask.fill(Qt.GlobalColor.white)  # Filling with white color to create a rounded rectangle
+        p = QPainter(mask)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setBrush(Qt.GlobalColor.black)  # Filling with black color to create a rounded rectangle
+        p.drawRoundedRect(mask.rect(), 10, 10)
+        p.end()
+        self.setMask(QBitmap(mask))
+
+        self.setStyleSheet(
+            """
+            QWidget{
+                background-color: lightgray;
+            }
+            """
+        )
+
+
         # Fixes error that ProgrameFrame has no attribute offset
         # (The window can't be moved by user without calculating the offset,
         # and if the offset variable doesn't exist yet, that's a problem)
@@ -39,7 +58,7 @@ class ProgramFrame(QWidget):
 
         # Set the margins and padding to 0
         self.setContentsMargins(0, 0, 0, 0)
-        
+
         # Create a QVBoxlayout for the layout of items belong to self (ProgramFrame instance)
         frame_layout = QVBoxLayout(self)
 
@@ -48,8 +67,8 @@ class ProgramFrame(QWidget):
         # "self" with dot notation. This isn't required to JUST display, but IS required
         # for the title bar to be able to communicate back easily to the program frame to
         # perform actions like closing the program when a user clicks the exit button
-        self.title_bar = TitleBar()
-        main_menu = MainMenu()
+        self.title_bar = TitleBar() # "I, the program frame, gave myself a title bar"
+        main_menu = MainMenu() # "I, the program frame, made a main_menu"
 
         # Attach our title bar and main menu to the frame's layout object
         frame_layout.addWidget(self.title_bar)

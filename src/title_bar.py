@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,
                           pyqtSignal, QEvent)
 from PyQt6.QtGui import QColor, QPixmap, QPalette, QIcon
-from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
+from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout, QSpacerItem,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow, QFrame,
                              QMessageBox, QPushButton, QSplashScreen, QSplitter, QSizePolicy,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, QTabWidget)
@@ -25,50 +25,83 @@ class TitleBar(QWidget):
         super().__init__()
         self.offset = None
 
-        # Set the margins and padding to 0
-        self.setContentsMargins(0, 0, 0, 0)
-
+        # Set the margis to zero (left margin, top margin, right margin, bottom margin)
+        self.setContentsMargins(10, 5, 0, 0)
         self.setAutoFillBackground(True)
-        self.setStyleSheet(
+
+        # Title bar label
+        self.window_title = QLabel(self)
+        self.window_title.setText("MLS Data Sorter")
+        self.window_title.setFixedSize(250,35)
+        self.window_title.setStyleSheet(
             """
             QWidget{
-                background-color: lightgray;
-                color:dimgray;
+                padding: 10px;
+                color: dimgray;
+            }
+            """
+        )
+
+        # CONTAINER LAYOUT: Windows buttons: minimize/maximize/close
+        self.window_buttons_layout = QHBoxLayout(self)
+
+        # Add spacer item to push buttons to the right
+        #                    (left margin, top margin, left padding policy, top padding policy)
+        spacer = QSpacerItem(520, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
+        self.window_buttons_layout.addItem(spacer)
+
+        # Minimize button
+        self.minimize = QPushButton(self)
+        self.minimize.setIcon(QIcon('assets/min.png'))
+        self.minimize.setFixedSize(20, 20)
+        self.minimize.setStyleSheet(
+            """
+            QWidget{
+                background-color: darkgray;
+                color:lightgray;
                 font:12px bold;
                 font-weight:bold;
                 border-radius: 5px;
-                height: 25px;
+                height: 95px;
                 padding: 5px;
             }
             """
         )
 
-        self.minimize=QPushButton(self)
-        self.minimize.setIcon(QIcon('assets/min.png'))
-
-        self.maximize=QPushButton(self)
+        # Maximize button
+        self.maximize = QPushButton(self)
         self.maximize.setIcon(QIcon('assets/max.png'))
+        self.maximize.setFixedSize(20, 20)
+        self.maximize.setStyleSheet(
+            """
+            QWidget{
+                background-color: darkgray;
+                border-radius: 5px;
+                padding: 5px;
+            }
+            """
+        )
 
         # CLOSE PROGRAM BUTTON - Creates button, adds image asset,
         # and finally connect to closeProgram method that will
         # emit the closeProgram signal to ProgramFrame
-        close=QPushButton(self)
-        close.setIcon(QIcon('assets/close.png'))
-        close.clicked.connect(self.closeProgram)
+        self.close = QPushButton(self)
+        self.close.setIcon(QIcon('assets/close.png'))
+        self.close.clicked.connect(self.closeProgram)
+        self.close.setFixedSize(20, 20)
 
-        # Title bar label
-        label=QLabel(self)
-        label.setText("MLS Data Sorter")
-        
-        # Window buttons layout: minimize/maximize/close
-        window_buttons_layout = QHBoxLayout(self)
-        window_buttons_layout.addWidget(label)
-        window_buttons_layout.addWidget(self.minimize)
-        window_buttons_layout.addWidget(self.maximize)
-        window_buttons_layout.addWidget(close)
+        self.window_buttons_layout.addWidget(self.minimize)
+        self.window_buttons_layout.addWidget(self.maximize)
+        self.window_buttons_layout.addWidget(self.close)
+        self.window_buttons_layout.addStretch(1) #adding stretch made the spacer work
 
-        # Set margins/padding to zero for window buttons layout
-        window_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        # # Create a vertical layout for the entire title bar
+        # title_bar_layout = QVBoxLayout(self)
+        # title_bar_layout.addWidget(label)
+        # title_bar_layout.addLayout(buttons_layout)
+
+        # # Set the title bar's layout to the one we just created
+        # self.setLayout(title_bar_layout)
 
     # Emits the custom close signal when the "close" button is clicked
     # (Close program is handled by ProgramFrame, which receives this signal)
