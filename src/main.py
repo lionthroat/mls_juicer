@@ -1,10 +1,15 @@
 import sys
 import time
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,  # Qt is for alignment
+                          pyqtSignal)
+from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
+                             QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+                             QMessageBox, QPushButton, QSplashScreen, QSplitter,
+                             QStackedWidget, QTextEdit, QVBoxLayout, QWidget, QTabWidget)
+
 from splash_screen import SplashScreen
-from main_menu import MainMenu
-from mls_data_processor import MLSDataProcessor
+from program_frame import ProgramFrame
 
 def main():
     app = QApplication(sys.argv)
@@ -19,14 +24,17 @@ def main():
 
     time.sleep(6)
 
-    # Create and show the main window
-    window = MainMenu()
-    window.show()
+    # Create and show the Frame that further instantiates the TitleBar and MainMenu
+    frame = ProgramFrame()
 
-    # Redirect the standard output to the terminal
+    # Now that the frame has its layout, and the layout has 2 elements, show it
+    frame.show()
+
+    # Redirect the standard output to the terminal. (bc PyQt6 can otherwise
+    # repress print statements that go to terminal)
     sys.stdout = sys.__stdout__
     
-    # Start the application event loop
+    # Actually start the application event loop
     sys.exit(app.exec())
 
 if __name__ == "__main__":

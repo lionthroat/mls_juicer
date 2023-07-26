@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd  # For reading in and manipulating CSV data from MLS exports
 import pyautogui  # For interacting with MLS: entering search criteria, clicking search buttons, etc.
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,  # Qt is for alignment
-                          pyqtSignal)
+                          pyqtSignal, QEvent)
 from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow,
@@ -37,6 +37,9 @@ def set_inputstyle(widget):
     widget.setStyleSheet("background-color: white; color: #111111;")
 
 class MainMenu(QMainWindow):
+    # Create a custom signal to be emitted when the title bar is clicked
+    mainMenuClicked = pyqtSignal(QEvent)
+
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -55,14 +58,16 @@ class MainMenu(QMainWindow):
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
-        self.setWindowTitle("MLS Data Sorter")
         # Set the size and position of the main window
-        self.setFixedSize(1000, 600)
+        # self.setFixedSize(1000, 600)
 
-        # Center the main window on the user's monitor
-        screen_geometry = QApplication.primaryScreen().availableGeometry()
-        self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
-        self.setStyleSheet("background-color: #6c6870; color: #FFFFFF")
+        # # Center the main window on the user's monitor
+        # screen_geometry = QApplication.primaryScreen().availableGeometry()
+        # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
+        self.setStyleSheet("background-color: #5C4F72; color: #FFFFFF")
+
+        # Set the margins and padding to 0
+        self.setContentsMargins(0, 0, 0, 0)
 
         # Create a vertical splitter to divide the window into two sections
         splitter = QSplitter(self)
@@ -70,7 +75,7 @@ class MainMenu(QMainWindow):
 
         # NAVPANE: Create the navigation pane on the left-hand side
         navigation_pane = QWidget()
-        navigation_pane.setStyleSheet("background-color: #382c47; color: #FFFFFF")
+        navigation_pane.setStyleSheet("background-color: #382c47; color: #FFFFFF; border-top: 1px solid #5C4F72;")
         navigation_pane.setFixedWidth(200)
         splitter.addWidget(navigation_pane)
 
@@ -81,7 +86,7 @@ class MainMenu(QMainWindow):
         # Set the main content widget as the central widget for MLSDataProcessor
         self.setCentralWidget(splitter)
 
-        # Create a QVBoxLayout for the navigation pane
+        # Create a QVBoxLayout for the layout of items belonging to navigation_pane
         navigation_layout = QVBoxLayout(navigation_pane)
         navigation_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         navigation_layout.setContentsMargins(20, 20, 20, 20)
@@ -94,12 +99,14 @@ class MainMenu(QMainWindow):
         self.label = QLabel(self)
         self.label.setPixmap(pixmap)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setStyleSheet("border-top: 0px;")
 
         # Add the logo label to the top of the navigation pane layout
         navigation_layout.addWidget(self.label)
 
         ## Create a QVBoxLayout for the buttons
         buttons_layout = QVBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create Navigation Pane Buttons
         self.import_csv_button = QPushButton("Import CSV")
@@ -143,15 +150,13 @@ class MainMenu(QMainWindow):
         # Set the stacked widget as the main content for MLSDataProcessor
         main_content_layout = QVBoxLayout(main_content)
         main_content_layout.addWidget(self.stacked_widget)
+        main_content_layout.addStretch(1)
 
         # Connect navigation buttons to their respective pages
         self.import_csv_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
         self.data_processing_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
         self.charts_page_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
         self.export_from_MLS_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
-
-        # Set the window flag to stay on top of other windows
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
 
         # Connect the currentChanged signal of the stacked widget to the update_button_styles method
         self.stacked_widget.currentChanged.connect(self.update_button_styles)
@@ -198,6 +203,7 @@ class MainMenu(QMainWindow):
     # Set up UI elements for the main menu
     def setup_import_csv_page(self, import_csv_page):
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
+        #layout.addStretch(1)
 
         # Last month name for report time period
         self.report_range = QLabel("All reports will be framed in terms of the most recently past calendar month:")
@@ -244,7 +250,7 @@ class MainMenu(QMainWindow):
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
-        
+        #layout.addStretch(1)
         button_style = (
             """QPushButton { background-color: #382c47;
             color: #FFFFFF;
@@ -284,7 +290,7 @@ class MainMenu(QMainWindow):
 
     def setup_charts_page(self, charts_page):
         layout = QVBoxLayout(charts_page)
-
+        layout.addStretch(1)
         # Create the matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
@@ -342,6 +348,8 @@ class MainMenu(QMainWindow):
 
     def setup_export_from_MLS_page(self, export_from_MLS_page):
         layout = QVBoxLayout(export_from_MLS_page)
+        layout.addStretch(1)
+
         # Add navigation buttons to the navigation pane + style them
         button_style = (
             """QPushButton { background-color: #382c47;
@@ -546,7 +554,7 @@ class MainMenu(QMainWindow):
 
         # Show the plot within the PyQt6 application
         self.canvas.draw()
-        
+
         # Add padding to the bottom of the chart
         self.figure.tight_layout()
 
@@ -782,3 +790,9 @@ class MainMenu(QMainWindow):
 
         return sold_off_market_count
 
+    # Somehow this is "eating"
+    def mousePressEvent(self, event):
+        # print("main menu mouse press", flush=True)
+        if event.type() == QEvent.Type.MouseButtonPress:
+            # Emit the custom signal when the title bar is clicked
+            self.mainMenuClicked.emit(event)
