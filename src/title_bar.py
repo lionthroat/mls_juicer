@@ -14,9 +14,15 @@ class TitleBar(QWidget):
     # Create a custom signal to be emitted when the title bar is clicked
     titleBarClicked = pyqtSignal(QEvent)
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
+    # Create a custom signal to be emitted when the "close" button is clicked
+    close_signal = pyqtSignal()
+
+    # def __init__(self, parent=None):
+    #     super().__init__(parent)
+    #     self.parent = parent
+
+    def __init__(self):
+        super().__init__()
         self.offset = None
 
         self.setAutoFillBackground(True)
@@ -38,8 +44,12 @@ class TitleBar(QWidget):
         self.maximize=QPushButton(self)
         self.maximize.setIcon(QIcon('assets/max.png'))
 
+        # CLOSE PROGRAM BUTTON - Creates button, adds image asset,
+        # and finally connect to closeProgram method that will
+        # emit the closeProgram signal to ProgramFrame
         close=QPushButton(self)
         close.setIcon(QIcon('assets/close.png'))
+        close.clicked.connect(self.closeProgram)
 
         self.minimize.setMinimumHeight(10)
         close.setMinimumHeight(10)
@@ -62,13 +72,7 @@ class TitleBar(QWidget):
         )
         self.maxNormal=False
 
-    # When uncommented, the does trigger print statement on click, but
-    # it also diverts the interaction handling to the title bar,
-    # instead of the program frame. And the title bar doesn't
-    # have the methods to move anything around right now,
-    
-    # def mousePressEvent(self, event):
-    #     print("title bar mouse press", flush=True)
-    #     if event.type() == QEvent.Type.MouseButtonPress:
-    #         # Emit the custom signal when the title bar is clicked
-    #         self.titleBarClicked.emit(event)
+    # Emits the custom close signal when the "close" button is clicked
+    # (Close program is handled by ProgramFrame, which receives this signal)
+    def closeProgram(self):
+        self.close_signal.emit()

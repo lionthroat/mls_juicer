@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,
-                          pyqtSignal, QEvent)
+                          pyqtSignal, QEvent, pyqtSlot)
 from PyQt6.QtGui import QColor, QPixmap, QPalette, QIcon
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow, QFrame,
@@ -41,15 +41,26 @@ class ProgramFrame(QWidget):
         frame_layout = QVBoxLayout(self)
 
         # Instantiate our custom title bar and the program's main menu/content window
-        title_bar = TitleBar()
+        # Note: the title_bar needs to be stored as a class member during its instantiation using
+        # "self" with dot notation. This isn't required to JUST display, but IS required
+        # for the title bar to be able to communicate back easily to the program frame to
+        # perform actions like closing the program when a user clicks the exit button
+        self.title_bar = TitleBar()
         main_menu = MainMenu()
 
         # Attach our title bar and main menu to the frame's layout object
-        frame_layout.addWidget(title_bar)
+        frame_layout.addWidget(self.title_bar)
         frame_layout.addWidget(main_menu)
 
         # Show our frame
         self.show()
+
+        # Connect the close signal from the TitleBar to the closeProgram method/slot/thing
+        self.title_bar.close_signal.connect(self.closeProgram)
+
+    def closeProgram(self):
+        # Close the entire program
+        self.close()
 
     def handleTitleBarClicked(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton:
