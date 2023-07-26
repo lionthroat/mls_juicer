@@ -65,6 +65,9 @@ class MainMenu(QMainWindow):
         # screen_geometry = QApplication.primaryScreen().availableGeometry()
         # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
         self.setStyleSheet("background-color: #6c6870; color: #FFFFFF")
+        
+        # Set the margins and padding to 0
+        self.setContentsMargins(0, 0, 0, 0)
 
         # Create a vertical splitter to divide the window into two sections
         splitter = QSplitter(self)

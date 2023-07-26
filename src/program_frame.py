@@ -31,12 +31,15 @@ class ProgramFrame(QWidget):
         # Then, WindowStaysOnTopHint tells your machine to open this program on top (in front of)
         # other programs/terminals
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-        
+
         # Fixes error that ProgrameFrame has no attribute offset
         # (The window can't be moved by user without calculating the offset,
         # and if the offset variable doesn't exist yet, that's a problem)
         self.offset = None
 
+        # Set the margins and padding to 0
+        self.setContentsMargins(0, 0, 0, 0)
+        
         # Create a QVBoxlayout for the layout of items belong to self (ProgramFrame instance)
         frame_layout = QVBoxLayout(self)
 
@@ -51,6 +54,7 @@ class ProgramFrame(QWidget):
         # Attach our title bar and main menu to the frame's layout object
         frame_layout.addWidget(self.title_bar)
         frame_layout.addWidget(main_menu)
+        frame_layout.setContentsMargins(0, 0, 0, 0) # Eliminates frame around whole program
 
         # Show our frame
         self.show()

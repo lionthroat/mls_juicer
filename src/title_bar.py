@@ -25,15 +25,20 @@ class TitleBar(QWidget):
         super().__init__()
         self.offset = None
 
+        # Set the margins and padding to 0
+        self.setContentsMargins(0, 0, 0, 0)
+
         self.setAutoFillBackground(True)
         self.setStyleSheet(
             """
             QWidget{
-                color:white;
+                background-color: lightgray;
+                color:dimgray;
                 font:12px bold;
                 font-weight:bold;
-                border-radius: 1px;
-                height: 11px;
+                border-radius: 5px;
+                height: 25px;
+                padding: 5px;
             }
             """
         )
@@ -51,26 +56,19 @@ class TitleBar(QWidget):
         close.setIcon(QIcon('assets/close.png'))
         close.clicked.connect(self.closeProgram)
 
-        self.minimize.setMinimumHeight(10)
-        close.setMinimumHeight(10)
-        self.maximize.setMinimumHeight(10)
-
+        # Title bar label
         label=QLabel(self)
         label.setText("MLS Data Sorter")
         
-        hbox=QHBoxLayout(self)
-        hbox.addWidget(label)
-        hbox.addWidget(self.minimize)
-        hbox.addWidget(self.maximize)
-        hbox.addWidget(close)
-        hbox.insertStretch(1,500)
-        hbox.setSpacing(0)
+        # Window buttons layout: minimize/maximize/close
+        window_buttons_layout = QHBoxLayout(self)
+        window_buttons_layout.addWidget(label)
+        window_buttons_layout.addWidget(self.minimize)
+        window_buttons_layout.addWidget(self.maximize)
+        window_buttons_layout.addWidget(close)
 
-        self.setSizePolicy(
-            QSizePolicy.Policy.MinimumExpanding,
-            QSizePolicy.Policy.MinimumExpanding
-        )
-        self.maxNormal=False
+        # Set margins/padding to zero for window buttons layout
+        window_buttons_layout.setContentsMargins(0, 0, 0, 0)
 
     # Emits the custom close signal when the "close" button is clicked
     # (Close program is handled by ProgramFrame, which receives this signal)
