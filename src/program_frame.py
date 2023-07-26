@@ -40,14 +40,14 @@ class ProgramFrame(QWidget):
         p = QPainter(mask)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.setBrush(Qt.GlobalColor.black)  # Filling with black color to create a rounded rectangle
-        p.drawRoundedRect(mask.rect(), 10, 10)
+        p.drawRoundedRect(mask.rect(), 5, 5)
         p.end()
         self.setMask(QBitmap(mask))
 
         self.setStyleSheet(
             """
             QWidget{
-                background-color: lightgray;
+                background-color: #382c47;
             }
             """
         )

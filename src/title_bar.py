@@ -26,18 +26,18 @@ class TitleBar(QWidget):
         self.offset = None
 
         # Set the margis to zero (left margin, top margin, right margin, bottom margin)
-        self.setContentsMargins(10, 5, 0, 0)
+        self.setContentsMargins(10, 9, 0, 0)
         self.setAutoFillBackground(True)
 
         # Title bar label
         self.window_title = QLabel(self)
         self.window_title.setText("MLS Data Sorter")
-        self.window_title.setFixedSize(250,35)
+        self.window_title.setFixedSize(250,55)
         self.window_title.setStyleSheet(
             """
             QWidget{
                 padding: 10px;
-                color: dimgray;
+                color: white;
             }
             """
         )
@@ -53,34 +53,33 @@ class TitleBar(QWidget):
         # Minimize button
         self.minimize = QPushButton(self)
         self.minimize.setIcon(QIcon('assets/min.png'))
-        self.minimize.setFixedSize(20, 20)
-        self.minimize.setStyleSheet(
-            """
-            QWidget{
-                background-color: darkgray;
-                color:lightgray;
-                font:12px bold;
-                font-weight:bold;
-                border-radius: 5px;
-                height: 95px;
-                padding: 5px;
-            }
-            """
-        )
+        self.minimize.setFixedSize(25, 25)
+        # self.minimize.setStyleSheet(
+        #     """
+        #     QWidget{
+        #         background-color: darkgray;
+        #         color:lightgray;
+        #         font:12px bold;
+        #         font-weight:bold;
+        #         border-radius: 5px;
+        #         height: 95px;
+        #         padding: 5px;
+        #     }
+        #     """
+        # )
 
         # Maximize button
         self.maximize = QPushButton(self)
         self.maximize.setIcon(QIcon('assets/max.png'))
-        self.maximize.setFixedSize(20, 20)
-        self.maximize.setStyleSheet(
-            """
-            QWidget{
-                background-color: darkgray;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            """
-        )
+        self.maximize.setFixedSize(25, 25)
+        # self.maximize.setStyleSheet(
+        #     """
+        #     QWidget{
+        #         border-radius: 5px;
+        #         padding: 5px;
+        #     }
+        #     """
+        # )
 
         # CLOSE PROGRAM BUTTON - Creates button, adds image asset,
         # and finally connect to closeProgram method that will
@@ -88,20 +87,12 @@ class TitleBar(QWidget):
         self.close = QPushButton(self)
         self.close.setIcon(QIcon('assets/close.png'))
         self.close.clicked.connect(self.closeProgram)
-        self.close.setFixedSize(20, 20)
+        self.close.setFixedSize(25, 25)
 
         self.window_buttons_layout.addWidget(self.minimize)
         self.window_buttons_layout.addWidget(self.maximize)
         self.window_buttons_layout.addWidget(self.close)
         self.window_buttons_layout.addStretch(1) #adding stretch made the spacer work
-
-        # # Create a vertical layout for the entire title bar
-        # title_bar_layout = QVBoxLayout(self)
-        # title_bar_layout.addWidget(label)
-        # title_bar_layout.addLayout(buttons_layout)
-
-        # # Set the title bar's layout to the one we just created
-        # self.setLayout(title_bar_layout)
 
     # Emits the custom close signal when the "close" button is clicked
     # (Close program is handled by ProgramFrame, which receives this signal)

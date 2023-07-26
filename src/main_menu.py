@@ -64,7 +64,7 @@ class MainMenu(QMainWindow):
         # # Center the main window on the user's monitor
         # screen_geometry = QApplication.primaryScreen().availableGeometry()
         # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
-        self.setStyleSheet("background-color: #6c6870; color: #FFFFFF")
+        self.setStyleSheet("background-color: #5C4F72; color: #FFFFFF")
 
         # Set the margins and padding to 0
         self.setContentsMargins(0, 0, 0, 0)
@@ -75,7 +75,7 @@ class MainMenu(QMainWindow):
 
         # NAVPANE: Create the navigation pane on the left-hand side
         navigation_pane = QWidget()
-        navigation_pane.setStyleSheet("background-color: #382c47; color: #FFFFFF")
+        navigation_pane.setStyleSheet("background-color: #382c47; color: #FFFFFF; border-top: 1px solid #5C4F72;")
         navigation_pane.setFixedWidth(200)
         splitter.addWidget(navigation_pane)
 
@@ -99,6 +99,7 @@ class MainMenu(QMainWindow):
         self.label = QLabel(self)
         self.label.setPixmap(pixmap)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setStyleSheet("border-top: 0px;")
 
         # Add the logo label to the top of the navigation pane layout
         navigation_layout.addWidget(self.label)
@@ -106,7 +107,7 @@ class MainMenu(QMainWindow):
         ## Create a QVBoxLayout for the buttons
         buttons_layout = QVBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # Create Navigation Pane Buttons
         self.import_csv_button = QPushButton("Import CSV")
         self.data_processing_button = QPushButton("Data Processing")
@@ -249,7 +250,7 @@ class MainMenu(QMainWindow):
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
-        layout.addStretch(1)
+        #layout.addStretch(1)
         button_style = (
             """QPushButton { background-color: #382c47;
             color: #FFFFFF;
