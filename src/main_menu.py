@@ -37,10 +37,31 @@ from selenium.webdriver.support.ui import WebDriverWait
 def set_inputstyle(widget):
     widget.setStyleSheet("background-color: white; color: #111111;")
 
-# class UserData:
-#     def __init__(self, name, age):
-#         self.name = name
-#         self.age = age
+class UserProfile:
+    def __init__(self):
+        self.user = None # user's profile name
+        self.data = None # user's stored MLS data
+        self.colors = [] # user's personal branding or preferred colors, RGB space only
+
+    # if the pickle file exists, open it and look for user data
+    def load_user_data(self):
+        if os.path.exists('user.pickle'):
+            with open('user.pickle', 'rb') as handle:
+                data = pickle.load(handle)
+                if isinstance(data, UserProfile):
+                    self.user = data.user
+                    self.data = data.data
+                    self.colors = data.colors
+
+    def save_user_data(self):
+        with open('user.pickle', 'wb') as handle:
+             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def set_user_name(self, user):
+        self.user = user
+
+    def get_user_name(self):
+        return self.user
 
 class MainMenu(QMainWindow):
     # Create a custom signal to be emitted when the title bar is clicked
@@ -48,7 +69,13 @@ class MainMenu(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # Determine whether we have a guest or returning user
+        self.user_profile = UserProfile() # new instance of user_profile
+        self.user_profile.load_user_data() # see if they're a new or returning user
+
         self.init_ui()
+
         # Initialize DOM distribution count variables as instance variables
         self.count0to30 = 0
         self.count31to60 = 0
@@ -59,9 +86,7 @@ class MainMenu(QMainWindow):
         self.month = ''
         self.sonoma_property_count = 0
 
-        # instance variable for master dataframe with all properties
-        self.data = None
-        self.name = ''
+        self.data = None # instance variable that will be used for pandas dataframe
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
@@ -207,24 +232,87 @@ class MainMenu(QMainWindow):
         elif index == 3:
             self.export_from_MLS_button.setStyleSheet(hover_style)
 
+    def handle_username_save_button(self):
+        username = self.new_user_edit.text().strip() # Strip leading whitespaces (also handles case that input is all whitespace)
+
+        if not username:
+            QMessageBox.critical(self, "Error", "Please enter a valid username")
+            return
+        else:
+            self.user_profile.set_user_name(username)
+            self.user_profile.save_user_data()
+
+            self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
+            self.not_user_label.setText(f'(Not {self.user_profile.user}? Make a new profile)')
+            self.userdata_stacked_widget.setCurrentIndex(1)
+
+    def userdata_switch_page(self):
+        if self.userdata_stacked_widget.currentIndex == 0:
+            self.userdata_stacked_widget.setCurrentIndex(1)
+        else:
+            self.userdata_stacked_widget.setCurrentIndex(0)
+
     # Set up UI elements for the main menu
     def setup_import_csv_page(self, import_csv_page):
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
-        #layout.addStretch(1)
 
-        self.make_profile_label = QLabel("Make an user profile to continue.")
+        # Stacked widget to show user data or allow for new user
+        self.userdata_stacked_widget = QStackedWidget(self)
+
+        # Add our stack to main layout
+        layout.addWidget(self.userdata_stacked_widget)
+
+        # Stak page 1: conainer widget (bc QVBoxLayout can't be added to a stack directly)
+        self.new_user_container = QWidget()
+
+        # Stack page 1: Make the layout and set the container as parent
+        self.new_user_layout = QVBoxLayout(self.new_user_container)
+
+        # Stack page 1: widgets
+        self.make_profile_label = QLabel("Welcome, guest! Make a user profile to continue.")
         self.ask_user_name_label = QLabel("Your name:")
         self.new_user_edit = QLineEdit()
-
-        layout.addWidget(self.make_profile_label)
-        layout.addWidget(self.ask_user_name_label)
-        layout.addWidget(self.new_user_edit)
-
         self.save_button = QPushButton("Ok")
-        self.save_button.clicked.connect(self.save_name_input)
-        layout.addWidget(self.save_button)
-        # with open('filename.pickle', 'wb') as handle:
-        #     pickle.dump(name, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # Stack page 1: add widgets to stack layout
+        self.new_user_layout.addWidget(self.make_profile_label)
+        self.new_user_layout.addWidget(self.ask_user_name_label)
+        self.new_user_layout.addWidget(self.new_user_edit)
+        self.new_user_layout.addWidget(self.save_button)
+
+        # Stack page 1: Connect button to handler
+        self.save_button.clicked.connect(self.handle_username_save_button)
+
+        # Add to stack: Index 0
+        self.userdata_stacked_widget.addWidget(self.new_user_container)
+
+        # Stack page 2: container widget
+        self.returning_user_page = QWidget()
+
+        # Stack page 2: layout
+        self.returning_user_layout = QVBoxLayout(self.returning_user_page)
+
+        # Stack page 2: widgets
+        self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
+        self.not_user_label = QLabel(f'(Not {self.user_profile.user}? Make a new profile)')
+        self.new_user_button = QPushButton("New user")
+
+        # Stack page 2: Connect button to handler
+        self.new_user_button.clicked.connect(self.userdata_switch_page)
+
+        # Stack page 2: add widgets to stack layout
+        self.returning_user_layout.addWidget(self.welcome_label)
+        self.returning_user_layout.addWidget(self.not_user_label)
+        self.returning_user_layout.addWidget(self.new_user_button)
+
+        # Add to stack: Index 1
+        self.userdata_stacked_widget.addWidget(self.returning_user_page)
+
+        # Determine which stack index to show
+        if self.user_profile.get_user_name() is None:
+            self.userdata_stacked_widget.setCurrentIndex(0)
+        else:
+            self.userdata_stacked_widget.setCurrentIndex(1)
 
         # Last month name for report time period
         self.report_range = QLabel("All reports will be framed in terms of the most recently past calendar month:")
@@ -268,9 +356,6 @@ class MainMenu(QMainWindow):
         # Add button styles
         self.go_button.setStyleSheet(button_style)
         self.csv_file_button.setStyleSheet(button_style)
-
-    def save_name_input(self):
-        self.name = self.new_user_edit.text()
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
