@@ -312,10 +312,7 @@ class MainMenu(QMainWindow):
         # Create a QFont object using the family name
         self.neutra_book = QFont(sans_serif)
 
-        layout = QVBoxLayout(welcome_back_page)  # Use the main menu widget as the parent for the layout
-
-        # layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.layout.setSpacing(0)
+        self.welcome_layout = QVBoxLayout(welcome_back_page)  # Use the main menu widget as the parent for the layout
 
         # Welcome message
         self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
@@ -338,11 +335,15 @@ class MainMenu(QMainWindow):
         self.new_user_button.clicked.connect(self.handle_new_user_button)
 
         # Stack page 2: add widgets to stack layout
-        layout.addStretch(1)
-        layout.addWidget(self.welcome_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.juice_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.new_user_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addStretch(3)
+        self.welcome_layout.addStretch(1)
+        self.welcome_layout.addWidget(self.welcome_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.welcome_layout.addWidget(self.juice_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.welcome_layout.addWidget(self.new_user_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.welcome_layout.addStretch(3)
+
+    def reload_welcome_back_page(self):
+        self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
+        self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
 
     def handle_new_user_button(self):
         self.stacked_widget.setCurrentIndex(5)
@@ -534,9 +535,13 @@ class MainMenu(QMainWindow):
 
         self.user_profiles_inner = QVBoxLayout()
 
+        # Generate 4 profile buttons, regardless of whether there are 3, 2, 1, or 0 profiles already
         files = self.get_existing_user_profiles()
-        for file in files:
-            self.generate_button(file)
+        for i in range(4):
+            if i < len(files):
+                self.generate_button(files[i])
+            else:
+                self.generate_empty_button()
 
         self.user_profiles_list.addLayout(self.user_profiles_inner)
 
@@ -576,6 +581,25 @@ class MainMenu(QMainWindow):
         self.save_button.clicked.connect(self.handle_username_save_button)
         self.new_user_edit.returnPressed.connect(self.handle_username_save_button)
 
+    def clear_user_profile_buttons(self):
+        # Loop through all widgets in the layout and remove the buttons
+        for i in reversed(range(self.wb_layout.count())):
+            widget = self.wb_layout.itemAt(i).widget()
+            if isinstance(widget, QPushButton):
+                self.wb_layout.removeWidget(widget)
+                widget.deleteLater()  # This ensures proper cleanup and prevents memory leaks
+
+    def reload_select_user_page(self):
+        self.clear_user_profile_buttons()
+
+        # Generate 4 profile buttons, regardless of whether there are 3, 2, 1, or 0 profiles already
+        files = self.get_existing_user_profiles()
+        for i in range(4):
+            if i < len(files):
+                self.generate_button(files[i])
+            else:
+                self.generate_empty_button()
+
     def generate_button(self, file):
         user_button_style = (
             """QPushButton { background-color: #382c47;
@@ -583,40 +607,88 @@ class MainMenu(QMainWindow):
             border: none;
             border-radius: 15px;
             padding: 15px;
+            font-size: 18px;
+            margin-top: 10px;
+            padding-left: 20px;
+            padding-right: 20px;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        delete_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
             font-size: 14px;
-            margin-top: 20px;
+            margin-top: 10px;
             }"""
             "QPushButton:hover { background-color: #534361; }"
         )
 
         try:
+
             username = file.split(".")[0]
 
             self.user_button = QPushButton(username)
-            self.user_profiles_inner.addWidget(self.user_button)
             self.user_button.setFont(self.neutra_book)
             self.user_button.setStyleSheet(user_button_style)
-
             self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
 
+            # This was a really annoying problem... leaving solution in the code for now...
+            # BAD: self.user_button.clicked.connect(self.switch_user_profiles(file))
+            # WHY: You are immediately calling the switch_user_profiles
+            # method and connecting the clicked signal to its return value,
+            # which is None. This happens because the connect method expects a
+            # callable (i.e., a function or method) as its argument, but you are
+            # invoking the method with (file) after its name.
 
-        # This was a really annoying problem... leaving solution in the code for now...
-        # BAD: self.user_button.clicked.connect(self.switch_user_profiles(file))
-        # WHY: You are immediately calling the switch_user_profiles
-        # method and connecting the clicked signal to its return value,
-        # which is None. This happens because the connect method expects a
-        # callable (i.e., a function or method) as its argument, but you are
-        # invoking the method with (file) after its name.
+            # To fix this issue, you should pass the method reference without invoking it.
+            # You can use a lambda function or functools.partial to achieve this.
+            # Here's how you can modify the generate_button method:
+            # Use partial to pass the file argument to the switch_user_profiles method
+            # GOOD: self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
 
-        # To fix this issue, you should pass the method reference without invoking it.
-        # You can use a lambda function or functools.partial to achieve this.
-        # Here's how you can modify the generate_button method:
-        # Use partial to pass the file argument to the switch_user_profiles method
-        # GOOD: self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
+            # Add delete profile button
+            delete_button = QPushButton(f"X - Delete Profile")
+            delete_button.setStyleSheet(delete_button_style)
+            delete_button.clicked.connect(partial(self.delete_profile, file))
+
+            layout = QHBoxLayout()
+            layout.addWidget(self.user_button)
+            layout.addWidget(delete_button)
+            self.user_profiles_inner.addLayout(layout)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f'{e}')
             return
+
+    def generate_empty_button(self):
+        button_style = (
+            """QPushButton { background-color: #382c47;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        empty_button = QPushButton("(Empty profile slot)")
+        self.wb_layout.addWidget(empty_button)
+        empty_button.setStyleSheet(button_style)
+
+    def delete_profile(self, file):
+        # Delete the hd5 file for the user profile
+        try:
+            os.remove(file)
+        except OSError:
+            pass
+
+        # Reload the welcome back page to reflect the changes
+        self.reload_welcome_back_page()
+        self.reload_select_user_page()
 
     def switch_user_profiles(self, file):
         print(f'checking out switch_user_profiles method', flush=True)
