@@ -19,7 +19,7 @@ import pandas as pd  # For reading in and manipulating CSV data from MLS exports
 import pyautogui  # For interacting with MLS: entering search criteria, clicking search buttons, etc.
 from PyQt6.QtCore import (QDate, QObject, Qt, QTimer,  # Qt is for alignment
                           pyqtSignal, QEvent)
-from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtGui import QColor, QPixmap, QFontDatabase, QFont
 from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow,
                              QMessageBox, QPushButton, QSplashScreen, QSplitter,
@@ -222,7 +222,7 @@ class MainMenu(QMainWindow):
             self.user_profile.save_user_data()
 
             self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
-            self.not_user_label.setText(f'(Not {self.user_profile.user}? Make a new profile)')
+            self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
             self.userdata_stacked_widget.setCurrentIndex(1)
 
     def userdata_switch_page(self):
@@ -233,6 +233,65 @@ class MainMenu(QMainWindow):
 
     # Set up UI elements for the main menu
     def setup_import_csv_page(self, import_csv_page):
+        button_style = (
+            """QPushButton { background-color: #382c47;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        new_user_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            width: 30%;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        welcome_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 32px;
+            """
+        )
+
+        select_csv_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 28px;
+            """
+        )
+
+        filename_field_style = (
+            """
+            color: #FFFFFF;
+            background-color: #534361;
+            border: 1px;
+            border-color: #FFFFFF;
+            padding: 15px;
+            font-size: 14px;
+            border-radius: 20px;
+            line-height: 2;
+            """
+        )
+
+        # Load the custom font file and assign a family name
+        font_1 = QFontDatabase.addApplicationFont("assets/NeutraText-Book.otf")
+        sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
+
+        # Create a QFont object using the family name
+        neutra_book = QFont(sans_serif)
+
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
 
         # Stacked widget to show user data or allow for new user
@@ -241,28 +300,29 @@ class MainMenu(QMainWindow):
         # Add our stack to main layout
         layout.addWidget(self.userdata_stacked_widget)
 
-        # Stak page 1: conainer widget (bc QVBoxLayout can't be added to a stack directly)
+        # NEW USER, Stack page 1: conainer widget (bc QVBoxLayout can't be added to a stack directly)
         self.new_user_container = QWidget()
 
-        # Stack page 1: Make the layout and set the container as parent
+        # NEW USER, Stack page 1: Make the layout and set the container as parent
         self.new_user_layout = QVBoxLayout(self.new_user_container)
 
-        # Stack page 1: widgets
+        # NEW USER, Stack page 1: widgets
         self.make_profile_label = QLabel("Welcome, guest! Make a user profile to continue.")
+        self.make_profile_label.setFont(neutra_book)
         self.ask_user_name_label = QLabel("Your name:")
         self.new_user_edit = QLineEdit()
         self.save_button = QPushButton("Ok")
 
-        # Stack page 1: add widgets to stack layout
+        # NEW USER, Stack page 1: add widgets to stack layout
         self.new_user_layout.addWidget(self.make_profile_label)
         self.new_user_layout.addWidget(self.ask_user_name_label)
         self.new_user_layout.addWidget(self.new_user_edit)
         self.new_user_layout.addWidget(self.save_button)
 
-        # Stack page 1: Connect button to handler
+        # NEW USER, Stack page 1: Connect button to handler
         self.save_button.clicked.connect(self.handle_username_save_button)
 
-        # Add to stack: Index 0
+        # NEW USER, Add to stack: Index 0
         self.userdata_stacked_widget.addWidget(self.new_user_container)
 
         # Stack page 2: container widget
@@ -270,18 +330,31 @@ class MainMenu(QMainWindow):
 
         # Stack page 2: layout
         self.returning_user_layout = QVBoxLayout(self.returning_user_page)
+        self.returning_user_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.returning_user_layout.setSpacing(0)
 
-        # Stack page 2: widgets
+        # Welcome message
         self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
-        self.not_user_label = QLabel(f'(Not {self.user_profile.user}? Make a new profile)')
-        self.new_user_button = QPushButton("New user")
+        self.welcome_label.setStyleSheet(welcome_style)
+        self.welcome_label.setFont(neutra_book)
+
+        # RETURNING USER, Stack page 2: widgets
+        # Juice pic
+        juice_pixmap = QPixmap("assets/juice.png")
+        self.juice_label = QLabel(self)
+        self.juice_label.setPixmap(juice_pixmap)
+        self.juice_label.setContentsMargins(0, 0, 0, 0)
+
+        # Switch profiles msg
+        self.new_user_button = QPushButton(f'(Not {self.user_profile.user}? Switch profiles)')
+        self.new_user_button.setStyleSheet(new_user_button_style)
 
         # Stack page 2: Connect button to handler
         self.new_user_button.clicked.connect(self.userdata_switch_page)
 
         # Stack page 2: add widgets to stack layout
         self.returning_user_layout.addWidget(self.welcome_label)
-        self.returning_user_layout.addWidget(self.not_user_label)
+        self.returning_user_layout.addWidget(self.juice_label, alignment=Qt.AlignmentFlag.AlignCenter)
         self.returning_user_layout.addWidget(self.new_user_button)
 
         # Add to stack: Index 1
@@ -293,37 +366,20 @@ class MainMenu(QMainWindow):
         else:
             self.userdata_stacked_widget.setCurrentIndex(1)
 
-        # Last month name for report time period
-        self.report_range = QLabel("All reports will be framed in terms of the most recently past calendar month:")
-        layout.addWidget(self.report_range)
-
-        self.month = self.get_previous_month()
-        self.time_period_label = QLabel(self.month)
-        layout.addWidget(self.time_period_label)
-
-        # City or county of Sonoma
-        self.geographic_area_label = QLabel("Currently only Sonoma is supported")
-        layout.addWidget(self.geographic_area_label)
-
-        button_style = (
-            """QPushButton { background-color: #382c47;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 15px;
-            padding: 15px;
-            }"""
-            "QPushButton:hover { background-color: #534361; }"
-        )
-
         # Select CSV File
-        self.csv_file_label = QLabel("Select the CSV file:")
+        self.csv_file_label = QLabel("Let's import your data:")
+        self.csv_file_label.setStyleSheet(select_csv_style)
+        self.csv_file_label.setFont(neutra_book)
+
         self.csv_file_edit = QLineEdit()
         self.csv_file_button = QPushButton("Browse")
+
         self.csv_file_button.clicked.connect(self.browse_csv_file)
-        layout.addWidget(self.csv_file_label)
+
+        self.csv_file_edit.setStyleSheet(filename_field_style)
+        layout.addWidget(self.csv_file_label, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.csv_file_edit)
         layout.addWidget(self.csv_file_button)
-        set_inputstyle(self.csv_file_edit)
 
 
         self.go_button = QPushButton("Validate CSV \& Process Data →")
