@@ -8,6 +8,20 @@ class UserProfile:
         self.data = None # user's stored MLS data
         self.colors = [] # user's personal branding or preferred colors, RGB space only
 
+    def load_switched_user_profile(self, file):
+        if os.path.exists(f'data/{file}'):
+            with pd.HDFStore(f'data/{file}', mode="r") as handle:
+                if 'user' in handle:
+                    self.user = handle['user'][0]
+
+            # User may or may not have stored data, give it a go
+            try:
+                with pd.HDFStore(f'data/{self.user}.h5', mode="r") as handle:
+                    if 'data' in handle:
+                        self.data = handle['data']
+            except:
+                return
+                
     # Load user name
     def load_user_name(self):
         if os.path.exists(f'data/{self.user}.h5'):

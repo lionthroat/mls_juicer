@@ -5,6 +5,7 @@ import sys
 import time
 import pickle # To remember user information
 from datetime import datetime, timedelta  # For finding last month's solds
+from functools import partial # for dynamically generating buttons w/o immediately calling their functions
 
 import cv2  # For locating MLS elements to interact with, boxes, tables, buttons, etc.
 
@@ -197,6 +198,15 @@ class MainMenu(QMainWindow):
 
         self.show()
 
+    def get_existing_user_profiles(self):
+        # Get the list of files in the "data/" directory
+        files = os.listdir("data/")
+
+        # Filter out the ".h5" files
+        hdf5_files = [file for file in files if file.endswith(".h5")]
+
+        return hdf5_files
+
     def update_button_styles(self, index):
         # Define the button styles for the normal and hover states
         button_style = (
@@ -241,7 +251,6 @@ class MainMenu(QMainWindow):
             self.select_user_button.setStyleSheet(hover_style)
 
     def handle_username_save_button(self):
-        print('handling a username save', flush=True)
         username = self.new_user_edit.text().strip() # Strip leading whitespaces (also handles case that input is all whitespace)
         print(username)
 
@@ -301,7 +310,7 @@ class MainMenu(QMainWindow):
         sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
 
         # Create a QFont object using the family name
-        neutra_book = QFont(sans_serif)
+        self.neutra_book = QFont(sans_serif)
 
         layout = QVBoxLayout(welcome_back_page)  # Use the main menu widget as the parent for the layout
 
@@ -311,7 +320,7 @@ class MainMenu(QMainWindow):
         # Welcome message
         self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
         self.welcome_label.setStyleSheet(welcome_style)
-        self.welcome_label.setFont(neutra_book)
+        self.welcome_label.setFont(self.neutra_book)
 
         # RETURNING USER, Widgets
         # Juice pic
@@ -335,9 +344,7 @@ class MainMenu(QMainWindow):
         layout.addWidget(self.new_user_button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addStretch(3)
 
-
     def handle_new_user_button(self):
-        print('handling new/switched user button', flush=True)
         self.stacked_widget.setCurrentIndex(5)
 
     # Set up UI elements for the main menu
@@ -430,7 +437,7 @@ class MainMenu(QMainWindow):
         sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
 
         # Create a QFont object using the family name
-        neutra_book = QFont(sans_serif)
+        self.neutra_book = QFont(sans_serif)
 
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
 
@@ -441,7 +448,7 @@ class MainMenu(QMainWindow):
             self.csv_file_label = QLabel("Let's import your data:")
 
         self.csv_file_label.setStyleSheet(select_csv_style)
-        self.csv_file_label.setFont(neutra_book)
+        self.csv_file_label.setFont(self.neutra_book)
 
         self.csv_file_edit = QLineEdit()
         self.csv_file_button = QPushButton("Browse")
@@ -511,14 +518,35 @@ class MainMenu(QMainWindow):
         sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
 
         # Create a QFont object using the family name
-        neutra_book = QFont(sans_serif)
+        self.neutra_book = QFont(sans_serif)
 
-        layout = QVBoxLayout(select_user_page)  # Use the main menu widget as the parent for the layout
-        layout.setSpacing(0)
+        self.wb_layout = QVBoxLayout(select_user_page)  # Use the main menu widget as the parent for the layout
+        self.wb_layout.setSpacing(0)
+
+        # Select user page: Select existing user label
+        self.select_existing_label = QLabel('Select an existing user:')
+        self.select_existing_label.setFont(self.neutra_book)
+        self.select_existing_label.setStyleSheet(make_profile_label_style)
+        self.wb_layout.addWidget(self.select_existing_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.user_profiles_list = QHBoxLayout()
+        self.user_profiles_list.addStretch(1)
+
+        self.user_profiles_inner = QVBoxLayout()
+
+        files = self.get_existing_user_profiles()
+        for file in files:
+            self.generate_button(file)
+
+        self.user_profiles_list.addLayout(self.user_profiles_inner)
+
+        self.user_profiles_list.addStretch(1)
+
+        self.wb_layout.addLayout(self.user_profiles_list)
 
         # Select user page: Welcome, guest! label
-        self.make_profile_label = QLabel('Welcome, guest! Set a profile name to continue.')
-        self.make_profile_label.setFont(neutra_book)
+        self.make_profile_label = QLabel('Or make a new profile:')
+        self.make_profile_label.setFont(self.neutra_book)
         self.make_profile_label.setStyleSheet(make_profile_label_style)
 
         # Select user page: Name input field
@@ -531,7 +559,7 @@ class MainMenu(QMainWindow):
         self.save_button.setStyleSheet(save_button_style)
 
         # Select user page: Adding widgets to stack layout
-        layout.addWidget(self.make_profile_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.wb_layout.addWidget(self.make_profile_label, alignment=Qt.AlignmentFlag.AlignCenter)
     
         # Horizontal layout just for the username input and arrow button
         self.name_layout = QHBoxLayout()
@@ -541,12 +569,72 @@ class MainMenu(QMainWindow):
         self.name_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self.name_layout.addStretch(1) # spacer to smoosh input and button together
 
-        layout.addLayout(self.name_layout)
-        layout.addStretch(1)
+        self.wb_layout.addLayout(self.name_layout)
+        self.wb_layout.addStretch(1)
 
         # Select user page: Connect button and enter key press to handler
         self.save_button.clicked.connect(self.handle_username_save_button)
         self.new_user_edit.returnPressed.connect(self.handle_username_save_button)
+
+    def generate_button(self, file):
+        user_button_style = (
+            """QPushButton { background-color: #382c47;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 14px;
+            margin-top: 20px;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        try:
+            username = file.split(".")[0]
+
+            self.user_button = QPushButton(username)
+            self.user_profiles_inner.addWidget(self.user_button)
+            self.user_button.setFont(self.neutra_book)
+            self.user_button.setStyleSheet(user_button_style)
+
+            self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
+
+
+        # This was a really annoying problem... leaving solution in the code for now...
+        # BAD: self.user_button.clicked.connect(self.switch_user_profiles(file))
+        # WHY: You are immediately calling the switch_user_profiles
+        # method and connecting the clicked signal to its return value,
+        # which is None. This happens because the connect method expects a
+        # callable (i.e., a function or method) as its argument, but you are
+        # invoking the method with (file) after its name.
+
+        # To fix this issue, you should pass the method reference without invoking it.
+        # You can use a lambda function or functools.partial to achieve this.
+        # Here's how you can modify the generate_button method:
+        # Use partial to pass the file argument to the switch_user_profiles method
+        # GOOD: self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f'{e}')
+            return
+
+    def switch_user_profiles(self, file):
+        print(f'checking out switch_user_profiles method', flush=True)
+        self.user_profile.load_switched_user_profile(file)
+
+        self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
+        self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
+
+        # Select CSV File
+        if self.user_profile.data is not None:
+            self.csv_file_label.setText("We've got your data")
+        else:
+            self.csv_file_label.setText("Let's import your data:")
+
+        try:
+            self.stacked_widget.setCurrentIndex(0)
+        except:
+            print("nope", flush=True)
 
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
