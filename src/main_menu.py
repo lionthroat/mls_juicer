@@ -194,7 +194,7 @@ class MainMenu(QMainWindow):
         if self.user_profile.user is not None:
             self.stacked_widget.setCurrentIndex(0)
         else:
-            self.stacked_widget.setCurrentIndex(4)
+            self.stacked_widget.setCurrentIndex(5)
 
         self.show()
 
