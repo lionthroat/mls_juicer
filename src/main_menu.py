@@ -48,7 +48,8 @@ class MainMenu(QMainWindow):
 
         # Determine whether we have a guest or returning user
         self.user_profile = UserProfile() # new instance of user_profile
-        self.user_profile.load_user_data() # see if they're a new or returning user
+        self.user_profile.load_user_name() # see if they're a new or returning user
+        self.user_profile.load_user_data() # try to load a spreadsheet for them
 
         self.init_ui()
 
@@ -61,8 +62,6 @@ class MainMenu(QMainWindow):
 
         self.month = ''
         self.sonoma_property_count = 0
-
-        self.data = None # instance variable that will be used for pandas dataframe
 
     # Main Program UI Elements, in tabbed format
     def init_ui(self):
@@ -219,7 +218,7 @@ class MainMenu(QMainWindow):
             return
         else:
             self.user_profile.set_user_name(username)
-            self.user_profile.save_user_data()
+            self.user_profile.save_user_name()
 
             self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
             self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
@@ -367,7 +366,11 @@ class MainMenu(QMainWindow):
             self.userdata_stacked_widget.setCurrentIndex(1)
 
         # Select CSV File
-        self.csv_file_label = QLabel("Let's import your data:")
+        if self.user_profile.data is not None:
+            self.csv_file_label = QLabel("We've got your data")
+        else:
+            self.csv_file_label = QLabel("Let's import your data:")
+
         self.csv_file_label.setStyleSheet(select_csv_style)
         self.csv_file_label.setFont(neutra_book)
 
@@ -380,7 +383,6 @@ class MainMenu(QMainWindow):
         layout.addWidget(self.csv_file_label, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.csv_file_edit)
         layout.addWidget(self.csv_file_button)
-
 
         self.go_button = QPushButton("Validate CSV \& Process Data →")
         layout.addWidget(self.go_button)
@@ -584,9 +586,9 @@ class MainMenu(QMainWindow):
 
         try:
             # Use pandas library to open csv as a dataframe, parse 'Selling Date' col as dates in the format 'MM/DD/YYYY'
-            self.data = pd.read_csv(csv_file, parse_dates=['Selling Date'], date_format='%m/%d/%Y')
-            self.data['Sell Price Stripped'] = self.data['Sell Price Display'].str.replace(',', '').astype(float)
-
+            self.user_profile.data = pd.read_csv(csv_file, parse_dates=['Selling Date'], date_format='%m/%d/%Y')
+            self.user_profile.data['Sell Price Stripped'] = self.user_profile.data['Sell Price Display'].str.replace(',', '').astype(float)
+            self.csv_file_label = QLabel("We've got your data")
         except Exception as e:
             QMessageBox.critical(self, "Error", "Attach valid CSV file")
             return
@@ -595,9 +597,9 @@ class MainMenu(QMainWindow):
 
     def filter_properties_by_city_and_date(self, city, start_date, end_date):
         # Filter the data for properties sold in the specified city
-        city_data = self.data[self.data['City'].str.contains(city, case=False, na=False)]
+        city_data = self.user_profile.data[self.user_profile.data['City'].str.contains(city, case=False, na=False)]
 
-        total = len(self.data)
+        total = len(self.user_profile.data)
         print(f'Filtering data for {city} from {start_date} to {end_date} from total of {total} properties', flush=True)
         # Filter the data for properties sold within the specified date range
         filtered_data = city_data[
@@ -640,15 +642,15 @@ class MainMenu(QMainWindow):
         self.figure.clear()
 
         # Convert 'Selling Date' to datetime
-        self.data['Selling Datetime'] = pd.to_datetime(self.data['Selling Date'])
+        self.user_profile.data['Selling Datetime'] = pd.to_datetime(self.user_profile.data['Selling Date'])
 
         # Extract the month and year from the 'Selling Date' column and create new columns
-        self.data['Month'] = self.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
-        self.data['YearMonth'] = self.data['Selling Datetime'].dt.to_period('M')  # For grouping
+        self.user_profile.data['Month'] = self.user_profile.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
+        self.user_profile.data['YearMonth'] = self.user_profile.data['Selling Datetime'].dt.to_period('M')  # For grouping
 
         # Group the data by 'YearMonth' and calculate the median sell price and median DOM for each group
-        median_sell_prices = self.data.groupby('YearMonth')['Sell Price Stripped'].median()
-        median_dom = self.data.groupby('YearMonth')['DOM'].median()
+        median_sell_prices = self.user_profile.data.groupby('YearMonth')['Sell Price Stripped'].median()
+        median_dom = self.user_profile.data.groupby('YearMonth')['DOM'].median()
 
         data_for_plot = []
         for i, year_month in enumerate(median_sell_prices.index):
@@ -703,15 +705,15 @@ class MainMenu(QMainWindow):
         self.figure.tight_layout()
 
         # # Convert 'Selling Date' to datetime
-        # self.data['Selling Datetime'] = pd.to_datetime(self.data['Selling Date'])
+        # self.user_profile.data['Selling Datetime'] = pd.to_datetime(self.user_profile.data['Selling Date'])
 
         # # Extract the month and year from the 'Selling Date' column and create new columns
-        # self.data['Month'] = self.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
-        # self.data['YearMonth'] = self.data['Selling Datetime'].dt.to_period('M')  # For grouping
+        # self.user_profile.data['Month'] = self.user_profile.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
+        # self.user_profile.data['YearMonth'] = self.user_profile.data['Selling Datetime'].dt.to_period('M')  # For grouping
 
         # # Group the data by 'YearMonth' and calculate the median sell price and median DOM for each group
-        # median_sell_prices = self.data.groupby('YearMonth')['Sell Price Stripped'].median()
-        # median_dom = self.data.groupby('YearMonth')['DOM'].median()
+        # median_sell_prices = self.user_profile.data.groupby('YearMonth')['Sell Price Stripped'].median()
+        # median_dom = self.user_profile.data.groupby('YearMonth')['DOM'].median()
 
         # data_for_plot = []
         # for i, year_month in enumerate(median_sell_prices.index):
@@ -838,21 +840,24 @@ class MainMenu(QMainWindow):
         output_lines = []
         dom_output_data = []
         output_text = ''
-        total_property_count = len(self.data)
+        total_property_count = len(self.user_profile.data)
 
         # Extract only days on market, not cumulative days on market
-        self.data['DOM/CDOM'] = self.data['DOM/CDOM'].apply(self.extract_first_integer)
-        self.data.rename(columns={'DOM/CDOM': 'DOM'}, inplace=True)
+        self.user_profile.data['DOM/CDOM'] = self.user_profile.data['DOM/CDOM'].apply(self.extract_first_integer)
+        self.user_profile.data.rename(columns={'DOM/CDOM': 'DOM'}, inplace=True)
 
         # Split the 'Street Full Address' into separate parts (address, city, state_zip)
         # Replaces prev version: data["Street Full Address"] = data["Street Full Address"].str.split(',').str.get(0)
-        self.data[['Address', 'City', 'State_Zip']] = self.data['Street Full Address'].str.split(',', n=2, expand=True)
+        self.user_profile.data[['Address', 'City', 'State_Zip']] = self.user_profile.data['Street Full Address'].str.split(',', n=2, expand=True)
 
         # Extract the zip code (5-digit only) from the 'State_Zip' column
-        self.data['Zip Code'] = self.data['State_Zip'].str.extract(r'(\d{5})')
+        self.user_profile.data['Zip Code'] = self.user_profile.data['State_Zip'].str.extract(r'(\d{5})')
 
         # Drop the 'State_Zip' column, as we have extracted the zip code
-        self.data.drop(columns=['State_Zip'], inplace=True)
+        self.user_profile.data.drop(columns=['State_Zip'], inplace=True)
+
+        self.user_profile.save_user_data()
+        self.csv_file_label = QLabel("We already have your data!")
 
         # SONOMA ONLY. Last Month's Solds: table, analysis, and exports
         sonoma_last_month_data = self.filter_properties_by_city_and_date('Sonoma', self.get_last_month_start(), self.get_last_month_end())
