@@ -30,38 +30,14 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from user_profile import UserProfile
+
 # Need to read this to make better visualizations:
 # https://www.pythonguis.com/tutorials/pyqt6-plotting-matplotlib/
 
 # Define a utility function to set white background color for widgets
 def set_inputstyle(widget):
     widget.setStyleSheet("background-color: white; color: #111111;")
-
-class UserProfile:
-    def __init__(self):
-        self.user = None # user's profile name
-        self.data = None # user's stored MLS data
-        self.colors = [] # user's personal branding or preferred colors, RGB space only
-
-    # if the pickle file exists, open it and look for user data
-    def load_user_data(self):
-        if os.path.exists('user.pickle'):
-            with open('user.pickle', 'rb') as handle:
-                data = pickle.load(handle)
-                if isinstance(data, UserProfile):
-                    self.user = data.user
-                    self.data = data.data
-                    self.colors = data.colors
-
-    def save_user_data(self):
-        with open('user.pickle', 'wb') as handle:
-             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    def set_user_name(self, user):
-        self.user = user
-
-    def get_user_name(self):
-        return self.user
 
 class MainMenu(QMainWindow):
     # Create a custom signal to be emitted when the title bar is clicked
@@ -97,22 +73,25 @@ class MainMenu(QMainWindow):
         # screen_geometry = QApplication.primaryScreen().availableGeometry()
         # self.move((screen_geometry.width() - self.width()) // 2, (screen_geometry.height() - self.height()) // 2)
         self.setStyleSheet("background-color: #5C4F72; color: #FFFFFF")
-
-        # Set the margins and padding to 0
         self.setContentsMargins(0, 0, 0, 0)
+
 
         # Create a vertical splitter to divide the window into two sections
         splitter = QSplitter(self)
+        splitter.setContentsMargins(0, 0, 0, 0)
         splitter.setHandleWidth(1)
 
         # NAVPANE: Create the navigation pane on the left-hand side
         navigation_pane = QWidget()
         navigation_pane.setStyleSheet("background-color: #382c47; color: #FFFFFF; border-top: 1px solid #5C4F72;")
         navigation_pane.setFixedWidth(200)
+        navigation_pane.setContentsMargins(0, 0, 0, 0)
+
         splitter.addWidget(navigation_pane)
 
-        # Create the main content area on the right-hand side
+        # Create the main content area on the right-hand side and add to splitter
         main_content = QWidget()
+        main_content.setContentsMargins(0, 0, 0, 0)
         splitter.addWidget(main_content)
 
         # Set the main content widget as the central widget for MLSDataProcessor
@@ -125,16 +104,16 @@ class MainMenu(QMainWindow):
         navigation_layout.setSpacing(10)
 
         # Load navpane user image
-        pixmap = QPixmap("assets/user_logo.png")
+        # pixmap = QPixmap("assets/user_logo.png")
 
         # Create a QLabel to display the program's name image
-        self.label = QLabel(self)
-        self.label.setPixmap(pixmap)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setStyleSheet("border-top: 0px;")
+        #self.label = QLabel(self)
+        #self.label.setPixmap(pixmap)
+        #self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #self.label.setStyleSheet("border-top: 0px;")
 
         # Add the logo label to the top of the navigation pane layout
-        navigation_layout.addWidget(self.label)
+        #navigation_layout.addWidget(self.label)
 
         ## Create a QVBoxLayout for the buttons
         buttons_layout = QVBoxLayout()

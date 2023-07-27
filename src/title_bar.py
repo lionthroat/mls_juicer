@@ -33,8 +33,8 @@ class TitleBar(QWidget):
 
         # Title bar label
         self.window_title = QLabel(self)
-        self.window_title.setText("MLS Data Sorter")
-        self.window_title.setFixedSize(250,55)
+        self.window_title.setText("MLS Juicer")
+        self.window_title.setFixedSize(250,37)
         self.window_title.setStyleSheet(
             """
             QWidget{
@@ -46,10 +46,11 @@ class TitleBar(QWidget):
 
         # CONTAINER LAYOUT: Windows buttons: minimize/maximize/close
         self.window_buttons_layout = QHBoxLayout(self)
+        self.window_buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         # Add spacer item to push buttons to the right
         #                    (left margin, top margin, left padding policy, top padding policy)
-        spacer = QSpacerItem(800, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
+        spacer = QSpacerItem(890, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
         self.window_buttons_layout.addItem(spacer)
 
         # Minimize button
@@ -57,33 +58,13 @@ class TitleBar(QWidget):
         self.minimize.setIcon(QIcon('assets/min.png'))
         self.minimize.clicked.connect(self.minimizeWindowSignalEmit)
         self.minimize.setFixedSize(25, 25)
-        # self.minimize.setStyleSheet(
-        #     """
-        #     QWidget{
-        #         background-color: darkgray;
-        #         color:lightgray;
-        #         font:12px bold;
-        #         font-weight:bold;
-        #         border-radius: 5px;
-        #         height: 95px;
-        #         padding: 5px;
-        #     }
-        #     """
-        # )
+
 
         # Maximize button
         self.maximize = QPushButton(self)
         self.maximize.setIcon(QIcon('assets/max.png'))
         self.minimize.clicked.connect(self.maximizeRestoreWindowSignalEmit)
         self.maximize.setFixedSize(25, 25)
-        # self.maximize.setStyleSheet(
-        #     """
-        #     QWidget{
-        #         border-radius: 5px;
-        #         padding: 5px;
-        #     }
-        #     """
-        # )
 
         # CLOSE PROGRAM BUTTON - Creates button, adds image asset,
         # and finally connect to closeProgram method that will
