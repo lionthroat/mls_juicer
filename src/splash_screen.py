@@ -33,7 +33,7 @@ class SplashScreen(QSplashScreen):
         self.setStyleSheet("background-color: #F7941D;")
 
         # Load the program's name image
-        pixmap = QPixmap("assets/logo_title_house.png")
+        pixmap = QPixmap("assets/mls_juicer.png")
 
         # Create a QLabel to display the program's name image
         self.label = QLabel(self)

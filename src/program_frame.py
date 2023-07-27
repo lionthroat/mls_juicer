@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QApplication, QComboBox, QFileDialog, QGridLayout,
                              QStackedWidget, QTextEdit, QVBoxLayout, QWidget, QTabWidget)
                              
 from title_bar import TitleBar
+from scenery_banner import SceneryBanner
 from main_menu import MainMenu
 
 ###############################################################################
@@ -31,8 +32,8 @@ class ProgramFrame(QWidget):
         # Then, WindowStaysOnTopHint tells your machine to open this program on top (in front of)
         # other programs/terminals
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-        self.setMinimumWidth(910)
-        self.setMinimumHeight(670)
+        self.setMinimumWidth(1000)
+        self.setMinimumHeight(750)
 
         # Set a rounded rectangle mask
         mask = QPixmap(self.size())
@@ -69,14 +70,18 @@ class ProgramFrame(QWidget):
         # "self" with dot notation. This isn't required to JUST display, but IS required
         # for the title bar to be able to communicate back easily to the program frame to
         # perform actions like closing the program when a user clicks the exit button
-        self.title_bar = TitleBar() # "I, the program frame, gave myself a title bar"
-        main_menu = MainMenu() # "I, the program frame, made a main_menu"
+
+        self.title_bar = TitleBar()      # "I, the program frame, gave myself a title bar"
+        scenery_banner = SceneryBanner() # "I, the program frame, made a scenery banner"
+        main_menu = MainMenu()           # "I, the program frame, made a main_menu"
 
         # Attach our title bar and main menu to the frame's layout object
         frame_layout.addWidget(self.title_bar)
+        frame_layout.addWidget(scenery_banner)
         frame_layout.addWidget(main_menu)
         frame_layout.setContentsMargins(0, 0, 0, 0) # Eliminates frame around whole program
-
+        frame_layout.setSpacing(0)
+        
         # Show our frame
         self.show()
 
