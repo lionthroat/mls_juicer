@@ -48,7 +48,9 @@ class MainMenu(QMainWindow):
 
         # Determine whether we have a guest or returning user
         self.user_profile = UserProfile() # new instance of user_profile
-        self.user_profile.load_user_name() # see if they're a new or returning user
+        name = self.load_last_user()
+        if name is not None:
+            self.user_profile.load_user_name() # see if they're a new or returning user
         self.user_profile.load_user_data() # try to load a spreadsheet for them
 
         self.init_ui()
@@ -119,17 +121,21 @@ class MainMenu(QMainWindow):
         buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create Navigation Pane Buttons
+        self.welcome_back_button = QPushButton("Welcome")
         self.import_csv_button = QPushButton("Import CSV")
         self.data_processing_button = QPushButton("Data Processing")
         self.charts_page_button = QPushButton("Charts and Graphs")
         self.export_from_MLS_button = QPushButton("Export from MLS")
+        self.select_user_button = QPushButton("Switch User")
         self.update_button_styles(0)
 
         # Add buttons to navigation page
+        navigation_layout.addWidget(self.welcome_back_button)
         navigation_layout.addWidget(self.import_csv_button)
         navigation_layout.addWidget(self.data_processing_button)
         navigation_layout.addWidget(self.charts_page_button)
         navigation_layout.addWidget(self.export_from_MLS_button)
+        navigation_layout.addWidget(self.select_user_button)
 
         ## Add the buttons layout to the navigation pane layout
         navigation_layout.addLayout(buttons_layout)
@@ -137,25 +143,35 @@ class MainMenu(QMainWindow):
         # Create a QStackedWidget for the main content area to hold different pages
         self.stacked_widget = QStackedWidget(main_content)
 
-        # Create the main menu page and add it to the stacked widget
+        # 1. Welcome page
+        welcome_back_page = QWidget()
+        self.setup_welcome_back_page(welcome_back_page)
+        self.stacked_widget.addWidget(welcome_back_page)
+
+        # 2. Import data page
         import_csv_page = QWidget()
         self.setup_import_csv_page(import_csv_page)  # Function to set up the main menu UI elements
         self.stacked_widget.addWidget(import_csv_page)
 
-        # Create the data processing page and add it to the stacked widget
+        # 3. Data processing page
         data_processing_page = QWidget()
         self.setup_data_processing_page(data_processing_page)  # Function to set up the data processing UI elements
         self.stacked_widget.addWidget(data_processing_page)
 
-        # Create the charts page and add it to the stacked widget
+        # 4. Charts page
         charts_page = QWidget()
         self.setup_charts_page(charts_page)
         self.stacked_widget.addWidget(charts_page)
 
-        # Create the export from MLS page and add it to the stacked widget
+        # 5. Export from MLS page
         export_from_MLS_page = QWidget()
         self.setup_export_from_MLS_page(export_from_MLS_page)
-        self.stacked_widget.addWidget(export_from_MLS_page)        
+        self.stacked_widget.addWidget(export_from_MLS_page)    
+
+        # 6. Select user page
+        select_user_page = QWidget()
+        self.setup_select_user_page(select_user_page)
+        self.stacked_widget.addWidget(select_user_page)    
 
         # Set the stacked widget as the main content for MLSDataProcessor
         main_content_layout = QVBoxLayout(main_content)
@@ -163,13 +179,21 @@ class MainMenu(QMainWindow):
         main_content_layout.addStretch(1)
 
         # Connect navigation buttons to their respective pages
-        self.import_csv_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
-        self.data_processing_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
-        self.charts_page_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
-        self.export_from_MLS_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
+        self.welcome_back_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
+        self.import_csv_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
+        self.data_processing_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
+        self.charts_page_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
+        self.export_from_MLS_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(4))
+        self.select_user_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(5))
 
         # Connect the currentChanged signal of the stacked widget to the update_button_styles method
         self.stacked_widget.currentChanged.connect(self.update_button_styles)
+
+        # Decide which page to show to user (whether they have a profile or not)
+        if self.user_profile.user is not None:
+            self.stacked_widget.setCurrentIndex(0)
+        else:
+            self.stacked_widget.setCurrentIndex(4)
 
         self.show()
 
@@ -195,23 +219,31 @@ class MainMenu(QMainWindow):
         )
 
         # Apply the normal style to all buttons
+        self.welcome_back_button.setStyleSheet(button_style)
         self.import_csv_button.setStyleSheet(button_style)
         self.data_processing_button.setStyleSheet(button_style)
         self.charts_page_button.setStyleSheet(button_style)
         self.export_from_MLS_button.setStyleSheet(button_style)
+        self.select_user_button.setStyleSheet(button_style)
 
         # Apply the hover style to the button corresponding to the current index
         if index == 0:
-            self.import_csv_button.setStyleSheet(hover_style)
+            self.welcome_back_button.setStyleSheet(hover_style)
         elif index == 1:
-            self.data_processing_button.setStyleSheet(hover_style)
+            self.import_csv_button.setStyleSheet(hover_style)
         elif index == 2:
-            self.charts_page_button.setStyleSheet(hover_style)
+            self.data_processing_button.setStyleSheet(hover_style)
         elif index == 3:
+            self.charts_page_button.setStyleSheet(hover_style)
+        elif index == 4:
             self.export_from_MLS_button.setStyleSheet(hover_style)
+        elif index == 5:
+            self.select_user_button.setStyleSheet(hover_style)
 
     def handle_username_save_button(self):
+        print('handling a username save', flush=True)
         username = self.new_user_edit.text().strip() # Strip leading whitespaces (also handles case that input is all whitespace)
+        print(username)
 
         if not username:
             QMessageBox.critical(self, "Error", "Please enter a valid username")
@@ -219,16 +251,94 @@ class MainMenu(QMainWindow):
         else:
             self.user_profile.set_user_name(username)
             self.user_profile.save_user_name()
+            self.save_last_user()
+            self.user_profile.data = None
+            self.user_profile.load_user_data()
 
             self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
             self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
-            self.userdata_stacked_widget.setCurrentIndex(1)
 
-    def userdata_switch_page(self):
-        if self.userdata_stacked_widget.currentIndex == 0:
-            self.userdata_stacked_widget.setCurrentIndex(1)
-        else:
-            self.userdata_stacked_widget.setCurrentIndex(0)
+            # Select CSV File
+            if self.user_profile.data is not None:
+                self.csv_file_label.setText("We've got your data")
+            else:
+                self.csv_file_label.setText("Let's import your data:")
+
+            self.stacked_widget.setCurrentIndex(0)
+
+    def setup_welcome_back_page(self, welcome_back_page):
+        new_user_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            width: 30%;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        welcome_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 32px;
+            """
+        )
+
+        make_profile_label_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 32px;
+            """
+        )
+
+        # Load the custom font file and assign a family name
+        font_1 = QFontDatabase.addApplicationFont("assets/NeutraText-Book.otf")
+        sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
+
+        # Create a QFont object using the family name
+        neutra_book = QFont(sans_serif)
+
+        layout = QVBoxLayout(welcome_back_page)  # Use the main menu widget as the parent for the layout
+
+        # layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # self.layout.setSpacing(0)
+
+        # Welcome message
+        self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
+        self.welcome_label.setStyleSheet(welcome_style)
+        self.welcome_label.setFont(neutra_book)
+
+        # RETURNING USER, Widgets
+        # Juice pic
+        juice_pixmap = QPixmap("assets/juice.png")
+        self.juice_label = QLabel(self)
+        self.juice_label.setPixmap(juice_pixmap)
+        self.juice_label.setContentsMargins(0, 0, 0, 0)
+
+        # Switch profiles msg
+        self.new_user_button = QPushButton(f'(Not {self.user_profile.user}? Switch profiles)')
+        self.new_user_button.setStyleSheet(new_user_button_style)
+        self.new_user_button.setFixedWidth(200)
+
+        # Go to switch profiles page
+        self.new_user_button.clicked.connect(self.handle_new_user_button)
+
+        # Stack page 2: add widgets to stack layout
+        layout.addStretch(1)
+        layout.addWidget(self.welcome_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.juice_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.new_user_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addStretch(3)
+
+
+    def handle_new_user_button(self):
+        print('handling new/switched user button', flush=True)
+        self.stacked_widget.setCurrentIndex(5)
 
     # Set up UI elements for the main menu
     def setup_import_csv_page(self, import_csv_page):
@@ -240,6 +350,18 @@ class MainMenu(QMainWindow):
             padding: 15px;
             }"""
             "QPushButton:hover { background-color: #534361; }"
+        )
+
+        save_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 36px;
+            }"""
+            "QPushButton:hover { background-color: #726784; }"
         )
 
         new_user_button_style = (
@@ -284,6 +406,25 @@ class MainMenu(QMainWindow):
             """
         )
 
+        make_profile_label_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 32px;
+            """
+        )
+
+        new_user_edit_style = (
+            """
+            color: #FFFFFF;
+            padding: 15px;
+            font-size: 32px;
+            border: none;
+            margin-right: 5px;
+            border-bottom: 1px solid white;
+            """
+        )
         # Load the custom font file and assign a family name
         font_1 = QFontDatabase.addApplicationFont("assets/NeutraText-Book.otf")
         sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
@@ -292,78 +433,6 @@ class MainMenu(QMainWindow):
         neutra_book = QFont(sans_serif)
 
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
-
-        # Stacked widget to show user data or allow for new user
-        self.userdata_stacked_widget = QStackedWidget(self)
-
-        # Add our stack to main layout
-        layout.addWidget(self.userdata_stacked_widget)
-
-        # NEW USER, Stack page 1: conainer widget (bc QVBoxLayout can't be added to a stack directly)
-        self.new_user_container = QWidget()
-
-        # NEW USER, Stack page 1: Make the layout and set the container as parent
-        self.new_user_layout = QVBoxLayout(self.new_user_container)
-
-        # NEW USER, Stack page 1: widgets
-        self.make_profile_label = QLabel("Welcome, guest! Make a user profile to continue.")
-        self.make_profile_label.setFont(neutra_book)
-        self.ask_user_name_label = QLabel("Your name:")
-        self.new_user_edit = QLineEdit()
-        self.save_button = QPushButton("Ok")
-
-        # NEW USER, Stack page 1: add widgets to stack layout
-        self.new_user_layout.addWidget(self.make_profile_label)
-        self.new_user_layout.addWidget(self.ask_user_name_label)
-        self.new_user_layout.addWidget(self.new_user_edit)
-        self.new_user_layout.addWidget(self.save_button)
-
-        # NEW USER, Stack page 1: Connect button to handler
-        self.save_button.clicked.connect(self.handle_username_save_button)
-
-        # NEW USER, Add to stack: Index 0
-        self.userdata_stacked_widget.addWidget(self.new_user_container)
-
-        # Stack page 2: container widget
-        self.returning_user_page = QWidget()
-
-        # Stack page 2: layout
-        self.returning_user_layout = QVBoxLayout(self.returning_user_page)
-        self.returning_user_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.returning_user_layout.setSpacing(0)
-
-        # Welcome message
-        self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
-        self.welcome_label.setStyleSheet(welcome_style)
-        self.welcome_label.setFont(neutra_book)
-
-        # RETURNING USER, Stack page 2: widgets
-        # Juice pic
-        juice_pixmap = QPixmap("assets/juice.png")
-        self.juice_label = QLabel(self)
-        self.juice_label.setPixmap(juice_pixmap)
-        self.juice_label.setContentsMargins(0, 0, 0, 0)
-
-        # Switch profiles msg
-        self.new_user_button = QPushButton(f'(Not {self.user_profile.user}? Switch profiles)')
-        self.new_user_button.setStyleSheet(new_user_button_style)
-
-        # Stack page 2: Connect button to handler
-        self.new_user_button.clicked.connect(self.userdata_switch_page)
-
-        # Stack page 2: add widgets to stack layout
-        self.returning_user_layout.addWidget(self.welcome_label)
-        self.returning_user_layout.addWidget(self.juice_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.returning_user_layout.addWidget(self.new_user_button)
-
-        # Add to stack: Index 1
-        self.userdata_stacked_widget.addWidget(self.returning_user_page)
-
-        # Determine which stack index to show
-        if self.user_profile.get_user_name() is None:
-            self.userdata_stacked_widget.setCurrentIndex(0)
-        else:
-            self.userdata_stacked_widget.setCurrentIndex(1)
 
         # Select CSV File
         if self.user_profile.data is not None:
@@ -394,6 +463,91 @@ class MainMenu(QMainWindow):
         self.go_button.setStyleSheet(button_style)
         self.csv_file_button.setStyleSheet(button_style)
 
+    def setup_select_user_page(self, select_user_page):
+        save_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 36px;
+            }"""
+            "QPushButton:hover { background-color: #726784; }"
+        )
+
+        new_user_button_style = (
+            """QPushButton {
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            width: 30%;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        make_profile_label_style = (
+            """
+            color: #FFFFFF;
+            border: none;
+            padding: 15px;
+            font-size: 32px;
+            """
+        )
+
+        new_user_edit_style = (
+            """
+            color: #FFFFFF;
+            padding: 15px;
+            font-size: 32px;
+            border: none;
+            margin-right: 5px;
+            border-bottom: 1px solid white;
+            """
+        )
+        # Load the custom font file and assign a family name
+        font_1 = QFontDatabase.addApplicationFont("assets/NeutraText-Book.otf")
+        sans_serif = QFontDatabase.applicationFontFamilies(font_1)[0]
+
+        # Create a QFont object using the family name
+        neutra_book = QFont(sans_serif)
+
+        layout = QVBoxLayout(select_user_page)  # Use the main menu widget as the parent for the layout
+        layout.setSpacing(0)
+
+        # Select user page: Welcome, guest! label
+        self.make_profile_label = QLabel('Welcome, guest! Set a profile name to continue.')
+        self.make_profile_label.setFont(neutra_book)
+        self.make_profile_label.setStyleSheet(make_profile_label_style)
+
+        # Select user page: Name input field
+        self.new_user_edit = QLineEdit()
+        self.new_user_edit.setStyleSheet(new_user_edit_style)
+
+        # Select user page: Continue arrow button
+        self.save_button = QPushButton("→")
+        self.save_button.setFixedWidth(55)
+        self.save_button.setStyleSheet(save_button_style)
+
+        # Select user page: Adding widgets to stack layout
+        layout.addWidget(self.make_profile_label, alignment=Qt.AlignmentFlag.AlignCenter)
+    
+        # Horizontal layout just for the username input and arrow button
+        self.name_layout = QHBoxLayout()
+
+        self.name_layout.addStretch(1) # spacer to smoosh input and button together
+        self.name_layout.addWidget(self.new_user_edit, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.name_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.name_layout.addStretch(1) # spacer to smoosh input and button together
+
+        layout.addLayout(self.name_layout)
+        layout.addStretch(1)
+
+        # Select user page: Connect button and enter key press to handler
+        self.save_button.clicked.connect(self.handle_username_save_button)
+        self.new_user_edit.returnPressed.connect(self.handle_username_save_button)
+
     def setup_data_processing_page(self, data_processing_page):
         layout = QVBoxLayout(data_processing_page)  # Use the data processing widget as the parent for the layout
         #layout.addStretch(1)
@@ -417,11 +571,11 @@ class MainMenu(QMainWindow):
 
         # Continue to charts button
         self.continue_charts_button = QPushButton("Continue to Charts →")
-        self.continue_charts_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
+        self.continue_charts_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
 
         # Back to main menu button
         self.start_over_button = QPushButton("← Start over")
-        self.start_over_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
+        self.start_over_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
 
         # Add button styles
         self.start_over_button.setStyleSheet(button_style)
@@ -481,7 +635,7 @@ class MainMenu(QMainWindow):
 
         # Back to main menu button
         self.start_over_button = QPushButton("← Start over")
-        self.start_over_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
+        self.start_over_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
         layout.addWidget(self.start_over_button)     
 
         # Add button styles
@@ -581,13 +735,13 @@ class MainMenu(QMainWindow):
 
     # Before going into data processing screen, try to read the csv file
     def validate_csv(self):
-        print("validating csv")
         csv_file = self.csv_file_edit.text()
 
         try:
             # Use pandas library to open csv as a dataframe, parse 'Selling Date' col as dates in the format 'MM/DD/YYYY'
             self.user_profile.data = pd.read_csv(csv_file, parse_dates=['Selling Date'], date_format='%m/%d/%Y')
             self.user_profile.data['Sell Price Stripped'] = self.user_profile.data['Sell Price Display'].str.replace(',', '').astype(float)
+
             self.csv_file_label = QLabel("We've got your data")
         except Exception as e:
             QMessageBox.critical(self, "Error", "Attach valid CSV file")
@@ -830,8 +984,7 @@ class MainMenu(QMainWindow):
         return None
 
     def handle_go_button(self):
-        print("test", flush=True)
-        self.stacked_widget.setCurrentIndex(1)
+        self.stacked_widget.setCurrentIndex(2)
         self.validate_csv()
 
     def process_data(self):
@@ -945,3 +1098,18 @@ class MainMenu(QMainWindow):
         if event.type() == QEvent.Type.MouseButtonPress:
             # Emit the custom signal when the title bar is clicked
             self.mainMenuClicked.emit(event)
+
+    def load_last_user(self):
+        try:
+            with open("data/last_user.txt", "r") as f:
+                last_user = f.read()
+                self.user_profile.user = last_user.strip()
+                return self.user_profile.user
+
+        except FileNotFoundError:
+            return None
+
+    def save_last_user(self):
+        with open("data/last_user.txt", "w") as f:
+            last_user = self.user_profile.user
+            f.write(last_user)
