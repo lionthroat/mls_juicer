@@ -1,21 +1,21 @@
 # The Juicer
 ## Data visualization for licensed real estate agents
-============================================
+###### ============================================
 ### Problem:
-Agents in Northern California are forced to rely on decades-old software infrastructure that hasn't substantively changed since I was a child tagging along to my mom's office. Something as simple as making a client presentation showing sold homes in their neighborhood in the last 30 days requires immense patience and tech-know to navigate the endless menus and checkboxes.
-============================================
+###### Agents in Northern California are forced to rely on decades-old software infrastructure that hasn't substantively changed since I was a child tagging along to my mom's office. Something as simple as making a client presentation showing sold homes in their neighborhood in the last 30 days requires immense patience and tech-know to navigate the endless menus and checkboxes.
+###### ============================================
 ### Solution:
-I believe that real estate agents shouldn't have to be data analysts to glean important insights from market trends in their areas of focus. I also believe they should have access to personally branded data visualizations on-demand. My goal was to make a tool that is easy and quick enough to be used by agents (or their registered non-licensed assistants).
-============================================
+###### I believe that real estate agents shouldn't have to be data analysts to glean important insights from market trends in their areas of focus. I also believe they should have access to personally branded data visualizations on-demand. My goal was to make a tool that is easy and quick enough to be used by agents (or their registered non-licensed assistants).
+###### ============================================
 ### Challenges:
-Because of controls on listing service data, the Juicer needed to be designed directly for agents, and communicated about in a way that could not be construed to be encouraging agents to inappropriately post, transmit, sell, or otherwise distribute their data. It is an ongoing and very fun challenge to try to anticipate every type of situation an agent could be facing, and then translate that into a UI that doesn't feel overwhelming, and code that can gracefully handle errors.
-============================================
+###### Because of controls on listing service data, the Juicer needed to be designed directly for agents, and communicated about in a way that could not be construed to be encouraging agents to inappropriately post, transmit, sell, or otherwise distribute their data. It is an ongoing and very fun challenge to try to anticipate every type of situation an agent could be facing, and then translate that into a UI that doesn't feel overwhelming, and code that can gracefully handle errors.
+###### ============================================
 ### Implementation:
-Code: Python 3.7
-GUI: PyQt6
-Data: Pandas
-Charts: Matplotlib
-============================================
+###### Code: Python 3.7
+###### GUI: PyQt6
+###### Data: Pandas
+###### Charts: Matplotlib
+###### ============================================
 #### Known bugs:
 1. Loading bar stopped animating
 2. Switching profile does not update the last profile logged in
@@ -24,9 +24,9 @@ Charts: Matplotlib
 5. Title bar: minimize button not functional
 6. Title bar: maximize button not functional
 
-============================================
+###### ============================================
 #### Features Road Map
-============================================
+###### ============================================
 ##### Late July 2023
 
 ###### Profile Fixes
@@ -47,7 +47,7 @@ Charts: Matplotlib
 
 ###### Data Manipulation
 - Need to differentiate by zip code for some Sonoma County cities and neighborhoods. It is easy to get an overcount of properties sold for Sonoma in any given month.
-============================================
+###### ============================================
 ##### August 2023
 
 ###### Modularization and testing
@@ -59,7 +59,7 @@ In August, I need to implement better overall modularization, as well as usage o
 - Apply branding to matplotlib charts
 - Create tools for user to change styles on the fly
 
-============================================
+###### ============================================
 ##### September 2023
 
 ###### UI and animation overhaul
