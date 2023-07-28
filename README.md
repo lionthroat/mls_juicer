@@ -1,6 +1,7 @@
 # The Juicer
 ## Data visualization for licensed real estate agents
-###### ============================================
+![mls_juicer_screenshot](https://github.com/lionthroat/mls_fucker/assets/1059120/366e1e59-cae1-43b1-b99c-dbb96012dee0)
+
 ### Problem:
 ###### Agents in Northern California are forced to rely on decades-old software infrastructure that hasn't substantively changed since I was a child tagging along to my mom's office. Something as simple as making a client presentation showing sold homes in their neighborhood in the last 30 days requires immense patience and tech-know to navigate the endless menus and checkboxes.
 ###### ============================================
