@@ -31,8 +31,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from profiles_manager import ProfilesManager
 from user_profile import UserProfile
-from profiles_manager import ProfileTools, ProfileUI
 
 # Need to read this to make better visualizations:
 # https://www.pythonguis.com/tutorials/pyqt6-plotting-matplotlib/
@@ -48,15 +48,18 @@ class MainMenu(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.pm = ProfilesManager()
+        self.pm.profile_switched.connect(self.reload_welcome_back_page)
+
         # Determine whether we have a guest or returning user
-        self.user_profile = UserProfile() # new instance of user_profile
-        self.profile_tools = ProfileTools()
+        try:
+            self.pm.curr_user.user = self.pm.load_last_user()
+        except:
+            print(f'no current user', flush=True)
 
-        self.user_profile.user = self.profile_tools.load_last_user()
-
-        if self.user_profile.user is not None:
-            self.user_profile.load_user_name() # see if they're a new or returning user
-        self.user_profile.load_user_data() # try to load a spreadsheet for them
+        if self.pm.curr_user.user is not None:
+            self.pm.curr_user.load_user_name() # see if they're a new or returning user
+        self.pm.curr_user.load_user_data() # try to load a spreadsheet for them
 
         self.init_ui()
 
@@ -175,7 +178,7 @@ class MainMenu(QMainWindow):
 
         # 6. Select user page
         select_user_page = QWidget()
-        self.profileUI = ProfileUI(select_user_page)
+        self.pm.setup_select_user_page(select_user_page)
         self.stacked_widget.addWidget(select_user_page)    
 
         # Set the stacked widget as the main content for MLSDataProcessor
@@ -195,7 +198,7 @@ class MainMenu(QMainWindow):
         self.stacked_widget.currentChanged.connect(self.update_button_styles)
 
         # Decide which page to show to user (whether they have a profile or not)
-        if self.user_profile.user is not None:
+        if self.pm.curr_user.user is not None:
             self.stacked_widget.setCurrentIndex(0)
         else:
             self.stacked_widget.setCurrentIndex(5)
@@ -285,7 +288,7 @@ class MainMenu(QMainWindow):
         self.welcome_layout = QVBoxLayout(welcome_back_page)  # Use the main menu widget as the parent for the layout
 
         # Welcome message
-        self.welcome_label = QLabel(f'Welcome back, {self.user_profile.user}!')
+        self.welcome_label = QLabel(f'Welcome back, {self.pm.curr_user.user}!')
         self.welcome_label.setStyleSheet(welcome_style)
         self.welcome_label.setFont(self.neutra_book)
 
@@ -297,12 +300,12 @@ class MainMenu(QMainWindow):
         self.juice_label.setContentsMargins(0, 0, 0, 0)
 
         # Switch profiles msg
-        self.new_user_button = QPushButton(f'(Not {self.user_profile.user}? Switch profiles)')
+        self.new_user_button = QPushButton(f'(Not {self.pm.curr_user.user}? Switch profiles)')
         self.new_user_button.setStyleSheet(new_user_button_style)
         self.new_user_button.setFixedWidth(200)
 
         # Go to switch profiles page
-        self.new_user_button.clicked.connect(self.handle_new_user_button)
+        self.new_user_button.clicked.connect(self.handle_switch_user_button)
 
         # Stack page 2: add widgets to stack layout
         self.welcome_layout.addStretch(1)
@@ -312,10 +315,23 @@ class MainMenu(QMainWindow):
         self.welcome_layout.addStretch(3)
 
     def reload_welcome_back_page(self):
-        self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
-        self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
+        self.welcome_label.setText(f'Welcome back, {self.pm.curr_user.user}!')
+        self.new_user_button.setText(f'(Not {self.pm.curr_user.user}? Switch profiles)')
 
-    def handle_new_user_button(self):
+        # Select CSV File
+        if self.pm.curr_user.data is not None:
+            self.csv_file_label.setText("We've got your data")
+        else:
+            self.csv_file_label.setText("Let's import your data:")
+
+        try:
+            self.stacked_widget.setCurrentIndex(0)
+        except:
+            print("nope", flush=True)
+
+    def handle_switch_user_button(self):
+        self.pm.reload_select_user_page()
+        self.pm.stack.setCurrentIndex(0)       
         self.stacked_widget.setCurrentIndex(5)
 
     # Set up UI elements for the main menu
@@ -340,7 +356,6 @@ class MainMenu(QMainWindow):
             }"""
             "QPushButton:hover { background-color: #726784; }"
         )
-
         new_user_button_style = (
             """QPushButton {
             color: #FFFFFF;
@@ -351,7 +366,6 @@ class MainMenu(QMainWindow):
             }"""
             "QPushButton:hover { background-color: #534361; }"
         )
-
         welcome_style = (
             """
             color: #FFFFFF;
@@ -360,7 +374,6 @@ class MainMenu(QMainWindow):
             font-size: 32px;
             """
         )
-
         select_csv_style = (
             """
             color: #FFFFFF;
@@ -369,7 +382,6 @@ class MainMenu(QMainWindow):
             font-size: 28px;
             """
         )
-
         filename_field_style = (
             """
             color: #FFFFFF;
@@ -382,7 +394,6 @@ class MainMenu(QMainWindow):
             line-height: 2;
             """
         )
-
         make_profile_label_style = (
             """
             color: #FFFFFF;
@@ -391,7 +402,6 @@ class MainMenu(QMainWindow):
             font-size: 32px;
             """
         )
-
         new_user_edit_style = (
             """
             color: #FFFFFF;
@@ -412,7 +422,7 @@ class MainMenu(QMainWindow):
         layout = QVBoxLayout(import_csv_page)  # Use the main menu widget as the parent for the layout
 
         # Select CSV File
-        if self.user_profile.data is not None:
+        if self.pm.curr_user.data is not None:
             self.csv_file_label = QLabel("We've got your data")
         else:
             self.csv_file_label = QLabel("Let's import your data:")
@@ -631,8 +641,8 @@ class MainMenu(QMainWindow):
 
         try:
             # Use pandas library to open csv as a dataframe, parse 'Selling Date' col as dates in the format 'MM/DD/YYYY'
-            self.user_profile.data = pd.read_csv(csv_file, parse_dates=['Selling Date'], date_format='%m/%d/%Y')
-            self.user_profile.data['Sell Price Stripped'] = self.user_profile.data['Sell Price Display'].str.replace(',', '').astype(float)
+            self.pm.curr_user.data = pd.read_csv(csv_file, parse_dates=['Selling Date'], date_format='%m/%d/%Y')
+            self.pm.curr_user.data['Sell Price Stripped'] = self.pm.curr_user.data['Sell Price Display'].str.replace(',', '').astype(float)
 
             self.csv_file_label = QLabel("We've got your data")
         except Exception as e:
@@ -643,9 +653,9 @@ class MainMenu(QMainWindow):
 
     def filter_properties_by_city_and_date(self, city, start_date, end_date):
         # Filter the data for properties sold in the specified city
-        city_data = self.user_profile.data[self.user_profile.data['City'].str.contains(city, case=False, na=False)]
+        city_data = self.pm.curr_user.data[self.pm.curr_user.data['City'].str.contains(city, case=False, na=False)]
 
-        total = len(self.user_profile.data)
+        total = len(self.pm.curr_user.data)
         print(f'Filtering data for {city} from {start_date} to {end_date} from total of {total} properties', flush=True)
         # Filter the data for properties sold within the specified date range
         filtered_data = city_data[
@@ -688,15 +698,15 @@ class MainMenu(QMainWindow):
         self.figure.clear()
 
         # Convert 'Selling Date' to datetime
-        self.user_profile.data['Selling Datetime'] = pd.to_datetime(self.user_profile.data['Selling Date'])
+        self.pm.curr_user.data['Selling Datetime'] = pd.to_datetime(self.pm.curr_user.data['Selling Date'])
 
         # Extract the month and year from the 'Selling Date' column and create new columns
-        self.user_profile.data['Month'] = self.user_profile.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
-        self.user_profile.data['YearMonth'] = self.user_profile.data['Selling Datetime'].dt.to_period('M')  # For grouping
+        self.pm.curr_user.data['Month'] = self.pm.curr_user.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
+        self.pm.curr_user.data['YearMonth'] = self.pm.curr_user.data['Selling Datetime'].dt.to_period('M')  # For grouping
 
         # Group the data by 'YearMonth' and calculate the median sell price and median DOM for each group
-        median_sell_prices = self.user_profile.data.groupby('YearMonth')['Sell Price Stripped'].median()
-        median_dom = self.user_profile.data.groupby('YearMonth')['DOM'].median()
+        median_sell_prices = self.pm.curr_user.data.groupby('YearMonth')['Sell Price Stripped'].median()
+        median_dom = self.pm.curr_user.data.groupby('YearMonth')['DOM'].median()
 
         data_for_plot = []
         for i, year_month in enumerate(median_sell_prices.index):
@@ -751,15 +761,15 @@ class MainMenu(QMainWindow):
         self.figure.tight_layout()
 
         # # Convert 'Selling Date' to datetime
-        # self.user_profile.data['Selling Datetime'] = pd.to_datetime(self.user_profile.data['Selling Date'])
+        # self.pm.curr_user.data['Selling Datetime'] = pd.to_datetime(self.pm.curr_user.data['Selling Date'])
 
         # # Extract the month and year from the 'Selling Date' column and create new columns
-        # self.user_profile.data['Month'] = self.user_profile.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
-        # self.user_profile.data['YearMonth'] = self.user_profile.data['Selling Datetime'].dt.to_period('M')  # For grouping
+        # self.pm.curr_user.data['Month'] = self.pm.curr_user.data['Selling Datetime'].dt.strftime('%b-%y')  # Format: 'Jun-23'
+        # self.pm.curr_user.data['YearMonth'] = self.pm.curr_user.data['Selling Datetime'].dt.to_period('M')  # For grouping
 
         # # Group the data by 'YearMonth' and calculate the median sell price and median DOM for each group
-        # median_sell_prices = self.user_profile.data.groupby('YearMonth')['Sell Price Stripped'].median()
-        # median_dom = self.user_profile.data.groupby('YearMonth')['DOM'].median()
+        # median_sell_prices = self.pm.curr_user.data.groupby('YearMonth')['Sell Price Stripped'].median()
+        # median_dom = self.pm.curr_user.data.groupby('YearMonth')['DOM'].median()
 
         # data_for_plot = []
         # for i, year_month in enumerate(median_sell_prices.index):
@@ -885,23 +895,23 @@ class MainMenu(QMainWindow):
         output_lines = []
         dom_output_data = []
         output_text = ''
-        total_property_count = len(self.user_profile.data)
+        total_property_count = len(self.pm.curr_user.data)
 
         # Extract only days on market, not cumulative days on market
-        self.user_profile.data['DOM/CDOM'] = self.user_profile.data['DOM/CDOM'].apply(self.extract_first_integer)
-        self.user_profile.data.rename(columns={'DOM/CDOM': 'DOM'}, inplace=True)
+        self.pm.curr_user.data['DOM/CDOM'] = self.pm.curr_user.data['DOM/CDOM'].apply(self.extract_first_integer)
+        self.pm.curr_user.data.rename(columns={'DOM/CDOM': 'DOM'}, inplace=True)
 
         # Split the 'Street Full Address' into separate parts (address, city, state_zip)
         # Replaces prev version: data["Street Full Address"] = data["Street Full Address"].str.split(',').str.get(0)
-        self.user_profile.data[['Address', 'City', 'State_Zip']] = self.user_profile.data['Street Full Address'].str.split(',', n=2, expand=True)
+        self.pm.curr_user.data[['Address', 'City', 'State_Zip']] = self.pm.curr_user.data['Street Full Address'].str.split(',', n=2, expand=True)
 
         # Extract the zip code (5-digit only) from the 'State_Zip' column
-        self.user_profile.data['Zip Code'] = self.user_profile.data['State_Zip'].str.extract(r'(\d{5})')
+        self.pm.curr_user.data['Zip Code'] = self.pm.curr_user.data['State_Zip'].str.extract(r'(\d{5})')
 
         # Drop the 'State_Zip' column, as we have extracted the zip code
-        self.user_profile.data.drop(columns=['State_Zip'], inplace=True)
+        self.pm.curr_user.data.drop(columns=['State_Zip'], inplace=True)
 
-        self.user_profile.save_user_data()
+        self.pm.curr_user.save_user_data()
         self.csv_file_label = QLabel("We already have your data!")
 
         # SONOMA ONLY. Last Month's Solds: table, analysis, and exports

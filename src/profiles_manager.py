@@ -7,7 +7,6 @@ import time
 from datetime import datetime, timedelta  # For finding last month's solds
 from functools import \
     partial  # for dynamically generating buttons w/o immediately calling their functions
-
 import cv2  # For locating MLS elements to interact with, boxes, tables, buttons, etc.
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt  # For making simple charts (not print quality)
@@ -32,29 +31,17 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from user_profile import UserProfile
 
-class ProfileTools():
+class ProfilesManager(QWidget):
+    profile_switched = pyqtSignal()
+
     def __init__(self):
         super().__init__()
+        self.curr_user = UserProfile()
 
-    def load_last_user(self):
-        try:
-            with open("data/last_user.txt", "r") as f:
-                last_user = f.read()
-                last_user_name = last_user.strip()
-                return last_user_name
-        except FileNotFoundError:
-            return None
-
-    def save_last_user(self):
-        with open("data/last_user.txt", "w") as f:
-            last_user = self.user_profile.user
-            f.write(last_user)
-
-class ProfileUI(QWidget):
-    def __init__(self, select_user_page):
-        super().__init__()
-        save_button_style = (
+    def setup_select_user_page(self, select_user_page):
+        self.save_button_style = (
             """QPushButton {
             color: #FFFFFF;
             border: none;
@@ -75,7 +62,7 @@ class ProfileUI(QWidget):
             }"""
             "QPushButton:hover { background-color: #534361; }"
         )
-        make_profile_label_style = (
+        self.make_profile_label_style = (
             """
             color: #FFFFFF;
             border: none;
@@ -83,7 +70,7 @@ class ProfileUI(QWidget):
             font-size: 32px;
             """
         )
-        new_user_edit_style = (
+        self.new_user_edit_style = (
             """
             color: #FFFFFF;
             padding: 15px;
@@ -101,94 +88,122 @@ class ProfileUI(QWidget):
         # Create a QFont object using the family name
         self.neutra_book = QFont(sans_serif)
 
-        self.wb_layout = QVBoxLayout(select_user_page)  # Use the main menu widget as the parent for the layout
-        self.wb_layout.setSpacing(0)
+        self.user_content = QVBoxLayout(select_user_page)  # Use the main menu widget as the parent for the layout
+        self.user_content.setSpacing(0)
 
-        # Select user page: Select existing user label
-        self.select_existing_label = QLabel('Select an existing user:')
-        self.select_existing_label.setFont(self.neutra_book)
-        self.select_existing_label.setStyleSheet(make_profile_label_style)
-        self.wb_layout.addWidget(self.select_existing_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        # Create a QStackedWidget for the main content area to hold different pages
+        self.stack = QStackedWidget()
 
-        self.user_profiles_list = QHBoxLayout()
-        self.user_profiles_list.addStretch(1)
+        self.page1 = QWidget()
+        self.page2 = QWidget()
+        self.page1_UI(self.page1)
+        self.page2_UI(self.page2)
 
-        self.user_profiles_inner = QVBoxLayout()
+        self.stack.addWidget(self.page1)
+        self.stack.addWidget(self.page2)
+        self.stack.setCurrentIndex(0)
 
-        # Generate 4 profile buttons, regardless of whether there are 3, 2, 1, or 0 profiles already
-        files = self.get_existing_user_profiles()
-        for i in range(4):
-            if i < len(files):
-                self.generate_button(files[i])
-            else:
-                self.generate_empty_button()
+        self.user_content.addWidget(self.stack)
+        self.show()
 
-        self.user_profiles_list.addLayout(self.user_profiles_inner)
+    def page1_UI(self, page):
+        layout = QVBoxLayout(page)
 
-        self.user_profiles_list.addStretch(1)
+        self.select_profile = QLabel('Select a profile:')
+        self.select_profile.setFont(self.neutra_book)
+        self.select_profile.setStyleSheet(self.make_profile_label_style)
 
-        self.wb_layout.addLayout(self.user_profiles_list)
+        layout.addWidget(self.select_profile, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # Select user page: Welcome, guest! label
-        self.make_profile_label = QLabel('Or make a new profile:')
+        self.smoosh_buttons_box = QHBoxLayout()
+        self.smoosh_buttons_box.addStretch(1)
+
+        self.profiles_box = QVBoxLayout()
+        self.make_buttons()
+
+        self.smoosh_buttons_box.addLayout(self.profiles_box)
+
+        self.smoosh_buttons_box.addStretch(3)
+        layout.addStretch(1)
+        layout.addLayout(self.smoosh_buttons_box)
+
+    def page2_UI(self, page):
+        self.back_button_style = (
+            """QPushButton { background-color: #382c47;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            width: 200px;
+            }"""
+            "QPushButton:hover { background-color: #534361; }"
+        )
+
+        layout = QVBoxLayout(page)
+        layout.addStretch(1)
+
+        # Make a new profile label + add to layout
+        self.make_profile_label = QLabel('Enter a new profile name:')
         self.make_profile_label.setFont(self.neutra_book)
-        self.make_profile_label.setStyleSheet(make_profile_label_style)
-
-        # Select user page: Name input field
-        self.new_user_edit = QLineEdit()
-        self.new_user_edit.setStyleSheet(new_user_edit_style)
-
-        # Select user page: Continue arrow button
-        self.save_button = QPushButton("→")
-        self.save_button.setFixedWidth(55)
-        self.save_button.setStyleSheet(save_button_style)
-
-        # Select user page: Adding widgets to stack layout
-        self.wb_layout.addWidget(self.make_profile_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.make_profile_label.setStyleSheet(self.make_profile_label_style)
+        layout.addWidget(self.make_profile_label, alignment=Qt.AlignmentFlag.AlignCenter)
     
         # Horizontal layout just for the username input and arrow button
-        self.name_layout = QHBoxLayout()
+        input_layout = QHBoxLayout()
 
-        self.name_layout.addStretch(1) # spacer to smoosh input and button together
-        self.name_layout.addWidget(self.new_user_edit, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.name_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.name_layout.addStretch(1) # spacer to smoosh input and button together
+        # New user input field
+        self.new_user_edit = QLineEdit()
+        self.new_user_edit.setStyleSheet(self.new_user_edit_style)
 
-        self.wb_layout.addLayout(self.name_layout)
-        self.wb_layout.addStretch(1)
+        # Save new user arrow button
+        self.save_button = QPushButton("→")
+        self.save_button.setFixedWidth(55)
+        self.save_button.setStyleSheet(self.save_button_style)
+
+        input_layout.addStretch(1) # spacer to smoosh input and button together
+        input_layout.addWidget(self.new_user_edit, alignment=Qt.AlignmentFlag.AlignCenter)
+        input_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        input_layout.addStretch(1) # spacer to smoosh input and button together
 
         # Select user page: Connect button and enter key press to handler
         self.save_button.clicked.connect(self.handle_username_save_button)
         self.new_user_edit.returnPressed.connect(self.handle_username_save_button)
 
-        self.show()
+        layout.addLayout(input_layout)
+
+        self.back_button = QPushButton("Back")
+        self.back_button.clicked.connect(self.switch_profile_views)
+        self.back_button.setStyleSheet(self.back_button_style)
+        self.back_button.setFixedWidth(200)
+
+        layout.addStretch(1)
+
+        layout.addWidget(self.back_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addStretch(1)
 
     def handle_username_save_button(self):
         username = self.new_user_edit.text().strip() # Strip leading whitespaces (also handles case that input is all whitespace)
-        print(username)
+        
+        self.new_user_edit.clear()
+        self.reload_select_user_page()
+        self.stack.setCurrentIndex(0)
 
         if not username:
             QMessageBox.critical(self, "Error", "Please enter a valid username")
             return
         else:
-            self.user_profile.set_user_name(username)
-            self.user_profile.save_user_name()
+            self.curr_user.set_user_name(username)
+            self.curr_user.save_user_name()
 
-            self.profile_tools.save_last_user()
+            self.save_last_user()
 
-            self.user_profile.data = None
-            self.user_profile.load_user_data()
+            self.curr_user.data = None
+            self.curr_user.load_user_data()
 
-            self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
-            self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
-
-            # Select CSV File
-            if self.user_profile.data is not None:
-                self.csv_file_label.setText("We've got your data")
-            else:
-                self.csv_file_label.setText("Let's import your data:")
-
-            self.stacked_widget.setCurrentIndex(0)
+            # Update profile name and profile data
+            self.profile_switched.emit()
 
     def get_existing_user_profiles(self):
         # Get the list of files in the "data/" directory
@@ -199,55 +214,41 @@ class ProfileUI(QWidget):
 
         return hdf5_files
 
-    def clear_user_profile_buttons(self):
-        # Loop through all widgets in the layout and remove the buttons
-        print('cleaning up buttons', flush=True)
-        for i in reversed(range(self.user_profiles_inner.count())):
-            widget = self.user_profiles_inner.itemAt(i).widget()
-            if isinstance(widget, QPushButton):
-                print('found button to delete', flush=True)
-                self.user_profiles_inner.removeWidget(widget)
-                widget.deleteLater()  # This ensures proper cleanup and prevents memory leaks
+    def delete_buttons(self):
+        # Loop through ALL 4 buttons and delete
+        print(f'found {self.profiles_box.count()} objects to delete', flush=True)
+        while self.profiles_box.count() > 0:
+            item = self.profiles_box.takeAt(0)
+            widget = item.widget()
+            if widget:
+                print(f'delete', flush=True)
+                widget.deleteLater()
 
     def reload_select_user_page(self):
-        self.clear_user_profile_buttons()
+        self.delete_buttons()
+        self.make_buttons()
 
+    def make_buttons(self):
+        print(f'making buttons', flush=True)
         # Generate 4 profile buttons, regardless of whether there are 3, 2, 1, or 0 profiles already
-        # files = self.get_existing_user_profiles()
-        # for i in range(4):
-        #     if i < len(files):
-        #         self.generate_button(files[i])
-        #     else:
-        #         self.generate_empty_button()
+        files = self.get_existing_user_profiles()
+        for i in range(4):
+            if i < len(files):
+                self.generate_button(files[i])
+            else:
+                self.generate_empty_button()
 
     def delete_profile(self, file):
         # Delete the hd5 file for the user profile
         try:
-            os.remove(file)
+            filepath = f'data/{file}'
+            os.remove(filepath)
         except OSError:
             pass
 
         # Reload the welcome back page to reflect the changes
-        self.reload_welcome_back_page()
+        self.profile_switched.emit()
         self.reload_select_user_page()
-
-    def switch_user_profiles(self, file):
-        print(f'checking out switch_user_profiles method', flush=True)
-        self.user_profile.load_switched_user_profile(file)
-
-        self.welcome_label.setText(f'Welcome back, {self.user_profile.user}!')
-        self.new_user_button.setText(f'(Not {self.user_profile.user}? Switch profiles)')
-
-        # Select CSV File
-        if self.user_profile.data is not None:
-            self.csv_file_label.setText("We've got your data")
-        else:
-            self.csv_file_label.setText("Let's import your data:")
-
-        try:
-            self.stacked_widget.setCurrentIndex(0)
-        except:
-            print("nope", flush=True)
 
     def generate_button(self, file):
         user_button_style = (
@@ -300,21 +301,21 @@ class ProfileUI(QWidget):
             # GOOD: self.user_button.clicked.connect(partial(self.switch_user_profiles, file))
 
             # Add delete profile button
-            delete_button = QPushButton(f"X - Delete Profile")
-            delete_button.setStyleSheet(delete_button_style)
-            delete_button.clicked.connect(partial(self.delete_profile, file))
+            self.delete_button = QPushButton(f"X - Delete Profile")
+            self.delete_button.setStyleSheet(delete_button_style)
+            self.delete_button.clicked.connect(partial(self.delete_profile, file))
 
             layout = QHBoxLayout()
             layout.addWidget(self.user_button)
-            layout.addWidget(delete_button)
-            self.user_profiles_inner.addLayout(layout)
+            layout.addWidget(self.delete_button)
+            self.profiles_box.addLayout(layout)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f'{e}')
             return
 
     def generate_empty_button(self):
-        button_style = (
+        self.button_style = (
             """QPushButton { background-color: #382c47;
             color: #FFFFFF;
             border: none;
@@ -324,7 +325,37 @@ class ProfileUI(QWidget):
             "QPushButton:hover { background-color: #534361; }"
         )
 
-        empty_button = QPushButton("(Empty profile slot)")
-        self.wb_layout.addWidget(empty_button)
-        empty_button.setStyleSheet(button_style)
+        self.empty_button = QPushButton("(Empty profile slot)")
+        self.empty_button.setStyleSheet(self.button_style)
+        self.empty_button.clicked.connect(partial(self.switch_profile_views))
 
+        self.profiles_box.addWidget(self.empty_button)
+
+    def load_last_user(self):
+        try:
+            with open("data/last_user.txt", "r") as f:
+                last_user = f.read()
+                last_user_name = last_user.strip()
+                return last_user_name
+
+        except FileNotFoundError:
+            return None
+
+    def save_last_user(self):
+        with open("data/last_user.txt", "w") as f:
+            last_user = self.curr_user.user
+            f.write(last_user)
+
+    def switch_profile_views(self):
+        curr = self.stack.currentIndex()
+        if curr == 0:
+            self.stack.setCurrentIndex(1)
+        else:
+            self.new_user_edit.clear()
+            self.stack.setCurrentIndex(0)
+
+    def switch_user_profiles(self, file):
+        self.curr_user.load_switched_user_profile(file)
+
+        # signal pm to update welcome page
+        self.profile_switched.emit()

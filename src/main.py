@@ -22,11 +22,11 @@ def main():
     loading_time_ms = 5000
     QTimer.singleShot(loading_time_ms, splash.hide)
 
-    time.sleep(6)
+    time.sleep(2)
 
     # Create and show the Frame that further instantiates the TitleBar and MainMenu
     frame = ProgramFrame()
-
+    
     # Now that the frame has its layout, and the layout has 2 elements, show it
     frame.show()
 
